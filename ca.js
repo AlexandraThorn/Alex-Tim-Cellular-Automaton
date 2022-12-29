@@ -108,6 +108,17 @@ var southwest = [+1, -1];
 var south = [0, +1];
 var southeast = [+1, +1];
 
+// Horizontal reflections across the y-axis. Randomly select from this
+// list and apply it to directions in your act() function.
+const reflectY = [
+    function pass(dir) {
+        return dir;
+    },
+    function flip([x, y]) {
+        return [-x, y];
+    },
+];
+
 // Move in the indicated direction from the position, returning the new position.
 function follow(pos, dir) {
     let [x, y] = pos;
@@ -154,14 +165,14 @@ function set(pos, dat) {
     redrawCell(dat, pos);
 }
 
-// Swap these two cells.
-function swap(cell1, cell2) {
-    if (cell1.pos[0] == cell2.pos[0] && cell1.pos[1] == cell2.pos[1])
+// Swap these two positions.
+function swap(pos1, pos2) {
+    if (pos1[0] == pos2[0] && pos1[1] == pos2[1])
         throw Error("Tried to swap cell into itself");
-    var data1 = cell1.dat;
-    var data2 = cell2.dat;
-    set(cell1.pos, data2);
-    set(cell2.pos, data1);
+    var cell1 = get(pos1);
+    var cell2 = get(pos2);
+    set(pos1, cell2.dat);
+    set(pos2, cell1.dat);
 }
 
 // Return any cell within 1 step, including diagonals and current position.

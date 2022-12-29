@@ -42,9 +42,19 @@ elements = {
             ctx.fillRect(px, py, cellSize, cellSize);
         },
         act: function(me) {
+            // Just fall straight down if possible.
             const below = look(me.pos, south);
             if (below.dat.type == 'air') {
-                swap(me, below);
+                swap(me.pos, below.pos);
+                return;
+            }
+
+            // Otherwise, see if it can slide diagonally.
+            var r = pickRandom(reflectY);
+            const se = look(me.pos, r(southeast));
+            if (se.dat.type == 'air') {
+                swap(me.pos, se.pos);
+                return;
             }
         },
     },
@@ -56,7 +66,7 @@ elements = {
         act: function(me) {
             let nearby = anyNeighborhood9(me.pos);
             if (nearby.dat.type == 'air') {
-                swap(me, nearby);
+                swap(me.pos, nearby.pos);
             }
         },
     },
