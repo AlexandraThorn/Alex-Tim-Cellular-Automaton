@@ -8,6 +8,10 @@
           display: block;
       }
 
+      #world.stepping {
+          cursor: pointer;
+      }
+
       #controls {
           padding: 0.3em;
       }
@@ -17,6 +21,7 @@
     <canvas id="world"></canvas>
     <div id="controls">
       <button onclick="doPlayPause()" id="play-pause">Play [p]</button>
+      <label><input type="checkbox" id="step-toggle"> Step mode [s]</label>
       <button onclick="doReloadConfig()">Reload config [r]</button>
     </div>
     <img src="rabbit-20.png" id="icon-rabbit">

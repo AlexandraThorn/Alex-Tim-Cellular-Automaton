@@ -32,6 +32,7 @@ function pickRandom(array) {
 // ==== DOM references ==== //
 
 const playPause = document.getElementById("play-pause");
+const controlStepToggle = document.getElementById('step-toggle');
 
 const canvas = document.getElementById("world");
 const ctx = canvas.getContext('2d'); // drawing context
@@ -82,15 +83,20 @@ function doDraw(pos) {
     redrawCell(dat, pos);
 }
 
-// Draw on the canvas due to a click.
+// Draw on the canvas, or step, due to a click.
 function doCanvasClick(evt) {
     if (evt.target != canvas) return;
-    doDraw(canvasToPos(evt));
+    if (isStepping) {
+        stepCell(canvasToPos(evt));
+    } else {
+        doDraw(canvasToPos(evt));
+    }
 }
 
 // Draw on the canvas due to a mouse drag.
 function doCanvasMousemove(evt) {
     if (evt.target != canvas) return;
+    if (isStepping) return;
     if ((evt.buttons & 1) == 0) return; // only left/main button
     doDraw(canvasToPos(evt));
 }
@@ -210,21 +216,23 @@ function precomputeVisitOrders() {
 
 // ==== Core loop ==== //
 
+function stepCell(pos) {
+    const [x, y] = pos;
+    const dat = world[x][y];
+    const element = elements[dat.type];
+    if (element) {
+        const act = element['act'];
+        if (act) {
+            act({pos, dat});
+        }
+    }
+}
+
 // Walk over all positions in the world and update them, in some order.
 function updateWorld() {
     // Pick a random visit order (list of positions) and walk it,
     // updating those positions.
-    pickRandom(visitOrders).forEach(pos => {
-        const [x, y] = pos;
-        const dat = world[x][y];
-        const element = elements[dat.type];
-        if (element) {
-            const act = element['act'];
-            if (act) {
-                act({pos, dat});
-            }
-        }
-    });
+    pickRandom(visitOrders).forEach(stepCell);
 }
 
 // Handle on the world-updating loop. (setInterval/clearInterval).
@@ -241,6 +249,24 @@ function doPlayPause() {
         // Play
         runner = setInterval(updateWorld, 200);
         playPause.textContent = "Pause [p]";
+    }
+}
+
+let isStepping = false;
+
+function doStepperToggle() {
+    if (controlStepToggle.checked) {
+        if (runner) {
+            // pause if playing
+            doPlayPause();
+        }
+        playPause.disabled = true;
+        isStepping = true;
+        canvas.classList.add('stepping');
+    } else {
+        playPause.disabled = false;
+        isStepping = false;
+        canvas.classList.remove('stepping');
     }
 }
 
@@ -289,13 +315,18 @@ function initialize() {
     canvas.addEventListener('click', doCanvasClick);
     canvas.addEventListener('mousemove', doCanvasMousemove);
 
+    controlStepToggle.addEventListener('change', doStepperToggle);
+
     document.addEventListener('keydown', evt => {
         if (evt.altKey || evt.ctrlKey || evt.metaKey) return;
 
-        if (evt.key == 'p') {
+        if (evt.key == 'p' && playPause.disabled == false) {
             doPlayPause();
         } else if (evt.key == 'r') {
             doReloadConfig();
+        } else if (evt.key == 's') {
+            controlStepToggle.checked = !controlStepToggle.checked;
+            doStepperToggle();
         }
     });
 
