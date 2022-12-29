@@ -10,45 +10,87 @@ var rows = 25;
 // Size of cells, in pixels
 var cellSize = 20;
 
-var EDGE = 0; // must be zero, for falseiness
-var EMPTY = 1;
-var SAND = 2;
-var RABBIT = 3;
+// ============================================================ //
 
-var rabbitImage = document.getElementById('icon-rabbit');
-
-// Column, then row
-var world = []
-for (var x = 0; x < cols; x++) {
-    world[x] = Array(rows).fill(EMPTY)
+const EDGE = 'edge';
+const Edge = {
+    type: EDGE,
+    act: function(me) { },
+    draw: function(px, py) { },
 }
+const edgeSingle = Object.create(Edge);
 
-function canvasToCell(evt) {
-    var cellX = Math.floor(evt.offsetX / cellSize);
-    var cellY = Math.floor(evt.offsetY / cellSize);
-    return [cellX, cellY];
-}
-
-function doClick(evt) {
-    if (evt.target != canvas) return;
-    const [cellX, cellY] = canvasToCell(evt);
-    world[cellX][cellY] = RABBIT;
-    redrawCell(cellX, cellY);
-}
-
-function redrawCell(x, y) {
-    var cur = world[x][y]
-    var ulx = x * cellSize;
-    var uly = y * cellSize;
-    if (cur == SAND) {
-        ctx.fillStyle = '#cc0';
-        ctx.fillRect(ulx, uly, cellSize, cellSize);
-    } else if (cur == RABBIT) {
-        ctx.drawImage(rabbitImage, ulx, uly);
-    } else {
+const AIR = 'air';
+const Air = {
+    type: AIR,
+    act: function(me) { },
+    draw: function(px, py) {
         ctx.fillStyle = 'white';
-        ctx.fillRect(ulx, uly, cellSize, cellSize);
-    }
+        ctx.fillRect(px, py, cellSize, cellSize);
+    },
+}
+
+const SAND = 'sand';
+const Sand = {
+    type: SAND,
+    act: function(me) {
+        const below = look(me.pos, DOWN);
+        if (below.what.type == 'air') {
+            swap(me, below);
+        }
+    },
+    draw: function(px, py) {
+        ctx.fillStyle = '#cc0';
+        ctx.fillRect(px, py, cellSize, cellSize);
+    },
+}
+
+const RABBIT = 'rabbit';
+var rabbitImage = document.getElementById('icon-rabbit');
+const Rabbit = {
+    type: RABBIT,
+    act: function(me) {
+        let nearby = anyNeighborhood9(me.pos);
+        if (nearby.what.type == 'air') {
+            swap(me, nearby);
+        }
+    },
+    draw: function(px, py) {
+        ctx.drawImage(rabbitImage, px, py);
+    },
+}
+
+// ============================================================ //
+
+// Column/x, then row/y
+var world = []
+
+function canvasToPos(evt) {
+    var posX = Math.floor(evt.offsetX / cellSize);
+    var posY = Math.floor(evt.offsetY / cellSize);
+    return [posX, posY];
+}
+
+function doDraw(pos) {
+    const [x, y] = pos
+    const what = world[x][y] = Object.create(Rabbit);
+    redrawCell(what, pos);
+}
+
+function doCanvasClick(evt) {
+    if (evt.target != canvas) return;
+    doDraw(canvasToPos(evt));
+}
+
+function doCanvasMousemove(evt) {
+    if (evt.target != canvas) return;
+    if ((evt.buttons & 1) == 0) return;
+    doDraw(canvasToPos(evt));
+}
+
+function redrawCell(what, pos) {
+    const [x, y] = pos;
+    what.draw(x * cellSize, y * cellSize);
 }
 
 function inWorld(x, y) {
@@ -57,7 +99,8 @@ function inWorld(x, y) {
 
 var DOWN = [0, 1];
 
-function follow(x, y, dir) {
+function follow(pos, dir) {
+    let [x, y] = pos;
     x += dir[0];
     y += dir[1];
     return [x, y];
@@ -68,18 +111,18 @@ function get(pos) {
     if (inWorld(x, y)) {
         return {pos: [x, y], what: world[x][y]};
     } else {
-        return {pos: [x, y], what: EDGE};
+        return {pos: [x, y], what: edgeSingle};
     }
 }
 
-function look(x, y, dir) {
-    return get(follow(x, y, dir));
+function look(pos, dir) {
+    return get(follow(pos, dir));
 }
 
 function set(pos, what) {
     const [x, y] = pos;
     world[x][y] = what;
-    redrawCell(x, y);
+    redrawCell(what, pos);
 }
 
 function swap(cell1, cell2) {
@@ -92,34 +135,21 @@ function swap(cell1, cell2) {
 }
 
 /** Return cell within 1 step, including starting position. */
-function anyNeighborhood9(x, y) {
+function anyNeighborhood9(pos) {
+    const [x, y] = pos;
     const hr = Math.floor(Math.random() * 3) - 1;
     const vr = Math.floor(Math.random() * 3) - 1;
-    const pos = [
+    return get([
         Math.min(Math.max(x + hr, 0), cols),
         Math.min(Math.max(y + vr, 0), rows)
-    ];
-    return get(pos);
+    ]);
 }
 
 function updateWorld() {
     for (var x = cols - 1; x >= 0; x--) {
         for (var y = rows - 1; y >= 0; y--) {
-            var curPos = [x, y];
-            var curWhat = world[x][y];
-            var curCell = {pos: curPos, what: curWhat};
-
-            if (curWhat == SAND) {
-                const below = look(x, y, DOWN);
-                if (below.what == EMPTY) {
-                    swap(curCell, below);
-                }
-            } else if (curWhat == RABBIT) {
-                let nearby = anyNeighborhood9(x, y);
-                if (nearby.what == EMPTY) {
-                    swap(curCell, nearby);
-                }
-            }
+            const what = world[x][y];
+            what.act({pos: [x, y], what: what});
         }
     }
 }
@@ -143,16 +173,15 @@ function initialize() {
     canvas.width = cols * cellSize;
     canvas.height = rows * cellSize;
 
-    world[0][0] = RABBIT;
-    world[5][5] = RABBIT;
-
     for (var x = 0; x < cols; x++) {
+        const row = world[x] = Array(rows);
         for (var y = 0; y < rows; y++) {
-            redrawCell(x, y);
+            set([x, y], Object.create(Air));
         }
     }
 
-    canvas.addEventListener('click', doClick);
+    canvas.addEventListener('click', doCanvasClick);
+    canvas.addEventListener('mousemove', doCanvasMousemove);
 
     doPlayPause();
 }
