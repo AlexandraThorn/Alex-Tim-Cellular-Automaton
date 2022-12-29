@@ -161,11 +161,11 @@ function doPlayPause() {
         // Pause
         clearInterval(runner);
         runner = null;
-        playPause.textContent = "Play";
+        playPause.textContent = "Play [p]";
     } else {
         // Play
         runner = setInterval(updateWorld, 200);
-        playPause.textContent = "Pause";
+        playPause.textContent = "Pause [p]";
     }
 }
 
@@ -183,7 +183,12 @@ function initialize() {
     canvas.addEventListener('click', doCanvasClick);
     canvas.addEventListener('mousemove', doCanvasMousemove);
 
-    doPlayPause();
+    document.addEventListener('keydown', evt => {
+        if (evt.altKey || evt.ctrlKey || evt.metaKey) return;
+        if (evt.key == 'p') {
+            doPlayPause();
+        }
+    });
 }
 
 initialize();
