@@ -42,7 +42,7 @@ elements = {
             ctx.fillRect(px, py, cellSize, cellSize);
         },
         act: function(me) {
-            const below = look(me.pos, DOWN);
+            const below = look(me.pos, south);
             if (below.dat.type == 'air') {
                 swap(me, below);
             }

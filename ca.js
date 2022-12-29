@@ -24,6 +24,11 @@ function range(len) {
     return Array.from(new Array(len), (_, i) => i);
 }
 
+// Pick a random element from the array. Assumes non-empty.
+function pickRandom(array) {
+    return array[Math.floor(array.length * Math.random())];
+}
+
 // ==== DOM references ==== //
 
 const playPause = document.getElementById("play-pause");
@@ -94,7 +99,14 @@ function doCanvasMousemove(evt) {
 // ==== Direction logic ==== //
 
 // Relative directions.
-var DOWN = [0, 1];
+var east = [+1, 0];
+var northeast = [+1, +1];
+var north = [0, -1];
+var northwest = [-1, -1];
+var west = [-1, 0];
+var southwest = [+1, -1];
+var south = [0, +1];
+var southeast = [+1, +1];
 
 // Move in the indicated direction from the position, returning the new position.
 function follow(pos, dir) {
@@ -184,17 +196,14 @@ function precomputeVisitOrders() {
     return Array.from(new Array(10), _ => shuffled(all));
 }
 
-// Get a random visit order.
-function getVisitOrder() {
-    return visitOrders[Math.floor(visitOrders.length * Math.random())];
-}
-
 
 // ==== Core loop ==== //
 
 // Walk over all positions in the world and update them, in some order.
 function updateWorld() {
-    getVisitOrder().forEach(pos => {
+    // Pick a random visit order (list of positions) and walk it,
+    // updating those positions.
+    pickRandom(visitOrders).forEach(pos => {
         const [x, y] = pos;
         const dat = world[x][y];
         const element = elements[dat.type];
@@ -204,7 +213,7 @@ function updateWorld() {
                 act({pos, dat});
             }
         }
-    })
+    });
 }
 
 // Handle on the world-updating loop. (setInterval/clearInterval).
