@@ -59,17 +59,50 @@ elements = {
         },
     },
 
+    'carrot': {
+        draw: function(px, py) {
+            ctx.fillStyle = '#fa0';
+            ctx.fillRect(px, py, cellSize, cellSize);
+        },
+        act: function(me) {
+            // Just fall straight down if possible.
+            const below = look(me.pos, south);
+            if (below.dat.type == 'air') {
+                swap(me.pos, below.pos);
+                return;
+            }
+
+            // Otherwise, see if it can slide diagonally.
+            var r = pickRandom(reflectY);
+            const se = look(me.pos, r(southeast));
+            if (se.dat.type == 'air') {
+                swap(me.pos, se.pos);
+                return;
+            }
+        },
+    },
+
     'rabbit': {
         draw: function(px, py) {
             ctx.drawImage(rabbitImage, px, py);
         },
         act: function(me) {
+            for (const r of shuffled(reflectY)) {
+                const side = look(me.pos, r(east));
+                if (side.dat.type == 'carrot') {
+                    set(side.pos, {type: 'air'});
+                    swap(me.pos, side.pos);
+                    return;
+                }
+            }
+
             let nearby = anyNeighborhood9(me.pos);
             if (nearby.dat.type == 'air') {
                 swap(me.pos, nearby.pos);
+                return;
             }
         },
     },
 };
 
-currentlyDrawing = 'rabbit';
+currentlyDrawing = 'carrot';
