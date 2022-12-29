@@ -4,61 +4,22 @@
 // - dat: Cell data, a map that contains at least a type field ("air", "sand", etc.)
 // - cell: A position and its contents, as {pos, dat}
 
-var playPause = document.getElementById("play-pause");
+const playPause = document.getElementById("play-pause");
 
-var canvas = document.getElementById("world");
-var ctx = canvas.getContext('2d'); // drawing context
+const canvas = document.getElementById("world");
+const ctx = canvas.getContext('2d'); // drawing context
 
 // Size of world, in cells
-var cols = 25;
-var rows = 25;
+const cols = 25;
+const rows = 25;
 
 // Size of cells, in pixels
-var cellSize = 20;
+const cellSize = 20;
 
 // ============================================================ //
 
-var rabbitImage = document.getElementById('icon-rabbit');
-if (rabbitImage.width != cellSize || rabbitImage.height != cellSize)
-    throw Error("Rabbit image does not match cell size");
-
-// All known types.
-//
-// - draw: Given upper-left pixel coordinates of the cell; expected to
-//   completely redraw this cell.
-// - act: Given a cell dict representing the current cell, take whatever
-//   actions this element will take on a time step.
-let types = {
-    'air': {
-        draw: function(px, py) {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(px, py, cellSize, cellSize);
-        },
-    },
-    'sand': {
-        draw: function(px, py) {
-            ctx.fillStyle = '#cc0';
-            ctx.fillRect(px, py, cellSize, cellSize);
-        },
-        act: function(me) {
-            const below = look(me.pos, DOWN);
-            if (below.dat.type == 'air') {
-                swap(me, below);
-            }
-        },
-    },
-    'rabbit': {
-        draw: function(px, py) {
-            ctx.drawImage(rabbitImage, px, py);
-        },
-        act: function(me) {
-            let nearby = anyNeighborhood9(me.pos);
-            if (nearby.dat.type == 'air') {
-                swap(me, nearby);
-            }
-        },
-    },
-}
+// Loaded from config.js
+var elements = {};
 
 // ============================================================ //
 
@@ -90,7 +51,7 @@ function doCanvasMousemove(evt) {
 
 function redrawCell(dat, pos) {
     const [x, y] = pos;
-    types[dat.type].draw(x * cellSize, y * cellSize);
+    elements[dat.type].draw(x * cellSize, y * cellSize);
 }
 
 function inWorld(x, y) {
@@ -149,7 +110,7 @@ function updateWorld() {
     for (var x = cols - 1; x >= 0; x--) {
         for (var y = rows - 1; y >= 0; y--) {
             const dat = world[x][y];
-            const element = types[dat.type];
+            const element = elements[dat.type];
             if (element) {
                 const act = element['act'];
                 if (act) {
@@ -175,6 +136,25 @@ function doPlayPause() {
     }
 }
 
+function doReloadConfig() {
+    const s = document.createElement('script');
+    s.id = "config-loader";
+    s.src = "config.js?cache-bust=" + Math.random();
+    s.addEventListener('load', function(evt) {
+        redrawWorld();
+    });
+    document.body.append(s);
+    document.body.removeChild(s);
+}
+
+function redrawWorld() {
+    for (var x = 0; x < cols; x++) {
+        for (var y = 0; y < rows; y++) {
+            redrawCell(world[x][y], [x, y]);
+        }
+    }
+}
+
 function initialize() {
     canvas.width = cols * cellSize;
     canvas.height = rows * cellSize;
@@ -182,7 +162,9 @@ function initialize() {
     for (var x = 0; x < cols; x++) {
         const row = world[x] = Array(rows);
         for (var y = 0; y < rows; y++) {
-            set([x, y], {type: 'air'});
+            // Not using set(), since that requests redrawing, and
+            // elements aren't loaded yet.
+            world[x][y] = {type: 'air'};
         }
     }
 
@@ -191,10 +173,15 @@ function initialize() {
 
     document.addEventListener('keydown', evt => {
         if (evt.altKey || evt.ctrlKey || evt.metaKey) return;
+
         if (evt.key == 'p') {
             doPlayPause();
+        } else if (evt.key == 'r') {
+            doReloadConfig();
         }
     });
+
+    doReloadConfig();
 }
 
 initialize();
