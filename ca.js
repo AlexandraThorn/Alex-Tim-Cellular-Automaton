@@ -18,11 +18,9 @@ var cellSize = 20;
 
 // ============================================================ //
 
-const AIR = 'air';
-const SAND = 'sand';
-const RABBIT = 'rabbit';
-
 var rabbitImage = document.getElementById('icon-rabbit');
+if (rabbitImage.width != cellSize || rabbitImage.height != cellSize)
+    throw Error("Rabbit image does not match cell size");
 
 // All known types.
 //
