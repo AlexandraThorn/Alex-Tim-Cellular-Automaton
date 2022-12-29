@@ -1,3 +1,16 @@
+"use strict";
+
+// ==== General utilities ==== //
+
+function shuffled(array) {
+    // Slower than Fisher-Yates, but good enough for precomputation.
+    return array
+        .map(value => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+}
+
+
 // Definitions:
 //
 // - pos: A world position [x, y]
@@ -25,6 +38,25 @@ var elements = {};
 
 // Column/x, then row/y
 var world = []
+
+function allPositions() {
+    return Array.from(new Array(cols), (_, x) => x).flatMap(x =>
+        Array.from(new Array(rows), (_, y) => [x, y])
+    );
+}
+
+var visitOrders = generateVisitOrders();
+
+// Generate a handful of randomized orderings of all cell positions.
+function generateVisitOrders() {
+    const all = allPositions();
+    return Array.from(new Array(10), _ => shuffled(all));
+}
+
+// Get a random visit order
+function getVisitOrder() {
+    return visitOrders[Math.floor(visitOrders.length * Math.random())];
+}
 
 function canvasToPos(evt) {
     var posX = Math.floor(evt.offsetX / cellSize);
@@ -107,18 +139,17 @@ function anyNeighborhood9(pos) {
 }
 
 function updateWorld() {
-    for (var x = cols - 1; x >= 0; x--) {
-        for (var y = rows - 1; y >= 0; y--) {
-            const dat = world[x][y];
-            const element = elements[dat.type];
-            if (element) {
-                const act = element['act'];
-                if (act) {
-                    act({pos: [x, y], dat: dat});
-                }
+    getVisitOrder().forEach(pos => {
+        const [x, y] = pos;
+        const dat = world[x][y];
+        const element = elements[dat.type];
+        if (element) {
+            const act = element['act'];
+            if (act) {
+                act({pos, dat});
             }
         }
-    }
+    })
 }
 
 var runner = null;
@@ -184,4 +215,5 @@ function initialize() {
     doReloadConfig();
 }
 
-initialize();
+// This forces us to wait for all images to load, not just all HTML.
+window.addEventListener('load', initialize);

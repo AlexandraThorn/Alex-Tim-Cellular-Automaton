@@ -1,3 +1,4 @@
+"use strict";
 
 var rabbitImage = document.getElementById('icon-rabbit');
 if (rabbitImage.width != cellSize || rabbitImage.height != cellSize)
