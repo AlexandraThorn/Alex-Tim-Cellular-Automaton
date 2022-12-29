@@ -1,3 +1,9 @@
+// Definitions:
+//
+// - pos: A world position [x, y]
+// - dat: Cell data, a map that contains at least a type field ("air", "sand", etc.)
+// - cell: A position and its contents, as {pos, dat}
+
 var playPause = document.getElementById("play-pause");
 
 var canvas = document.getElementById("world");
@@ -12,51 +18,47 @@ var cellSize = 20;
 
 // ============================================================ //
 
-const EDGE = 'edge';
-const Edge = {
-    type: EDGE,
-    act: function(me) { },
-    draw: function(px, py) { },
-}
-const edgeSingle = Object.create(Edge);
-
 const AIR = 'air';
-const Air = {
-    type: AIR,
-    act: function(me) { },
-    draw: function(px, py) {
-        ctx.fillStyle = 'white';
-        ctx.fillRect(px, py, cellSize, cellSize);
-    },
-}
-
 const SAND = 'sand';
-const Sand = {
-    type: SAND,
-    act: function(me) {
-        const below = look(me.pos, DOWN);
-        if (below.what.type == 'air') {
-            swap(me, below);
-        }
-    },
-    draw: function(px, py) {
-        ctx.fillStyle = '#cc0';
-        ctx.fillRect(px, py, cellSize, cellSize);
-    },
-}
-
 const RABBIT = 'rabbit';
+
 var rabbitImage = document.getElementById('icon-rabbit');
-const Rabbit = {
-    type: RABBIT,
-    act: function(me) {
-        let nearby = anyNeighborhood9(me.pos);
-        if (nearby.what.type == 'air') {
-            swap(me, nearby);
-        }
+
+// All known types.
+//
+// - draw: Given upper-left pixel coordinates of the cell; expected to
+//   completely redraw this cell.
+// - act: Given a cell dict representing the current cell, take whatever
+//   actions this element will take on a time step.
+let types = {
+    'air': {
+        draw: function(px, py) {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(px, py, cellSize, cellSize);
+        },
     },
-    draw: function(px, py) {
-        ctx.drawImage(rabbitImage, px, py);
+    'sand': {
+        draw: function(px, py) {
+            ctx.fillStyle = '#cc0';
+            ctx.fillRect(px, py, cellSize, cellSize);
+        },
+        act: function(me) {
+            const below = look(me.pos, DOWN);
+            if (below.dat.type == 'air') {
+                swap(me, below);
+            }
+        },
+    },
+    'rabbit': {
+        draw: function(px, py) {
+            ctx.drawImage(rabbitImage, px, py);
+        },
+        act: function(me) {
+            let nearby = anyNeighborhood9(me.pos);
+            if (nearby.dat.type == 'air') {
+                swap(me, nearby);
+            }
+        },
     },
 }
 
@@ -73,8 +75,8 @@ function canvasToPos(evt) {
 
 function doDraw(pos) {
     const [x, y] = pos
-    const what = world[x][y] = Object.create(Rabbit);
-    redrawCell(what, pos);
+    const dat = world[x][y] = {type: 'rabbit'};
+    redrawCell(dat, pos);
 }
 
 function doCanvasClick(evt) {
@@ -88,9 +90,9 @@ function doCanvasMousemove(evt) {
     doDraw(canvasToPos(evt));
 }
 
-function redrawCell(what, pos) {
+function redrawCell(dat, pos) {
     const [x, y] = pos;
-    what.draw(x * cellSize, y * cellSize);
+    types[dat.type].draw(x * cellSize, y * cellSize);
 }
 
 function inWorld(x, y) {
@@ -109,9 +111,9 @@ function follow(pos, dir) {
 function get(pos) {
     const [x, y] = pos;
     if (inWorld(x, y)) {
-        return {pos: [x, y], what: world[x][y]};
+        return {pos: [x, y], dat: world[x][y]};
     } else {
-        return {pos: [x, y], what: edgeSingle};
+        return {pos: [x, y], dat: {type: 'edge'}};
     }
 }
 
@@ -119,17 +121,17 @@ function look(pos, dir) {
     return get(follow(pos, dir));
 }
 
-function set(pos, what) {
+function set(pos, dat) {
     const [x, y] = pos;
-    world[x][y] = what;
-    redrawCell(what, pos);
+    world[x][y] = dat;
+    redrawCell(dat, pos);
 }
 
 function swap(cell1, cell2) {
     if (cell1.pos[0] == cell2.pos[0] && cell1.pos[1] == cell2.pos[1])
         throw Error("Tried to swap cell into itself");
-    var data1 = cell1.what;
-    var data2 = cell2.what;
+    var data1 = cell1.dat;
+    var data2 = cell2.dat;
     set(cell1.pos, data2);
     set(cell2.pos, data1);
 }
@@ -148,8 +150,14 @@ function anyNeighborhood9(pos) {
 function updateWorld() {
     for (var x = cols - 1; x >= 0; x--) {
         for (var y = rows - 1; y >= 0; y--) {
-            const what = world[x][y];
-            what.act({pos: [x, y], what: what});
+            const dat = world[x][y];
+            const element = types[dat.type];
+            if (element) {
+                const act = element['act'];
+                if (act) {
+                    act({pos: [x, y], dat: dat});
+                }
+            }
         }
     }
 }
@@ -176,7 +184,7 @@ function initialize() {
     for (var x = 0; x < cols; x++) {
         const row = world[x] = Array(rows);
         for (var y = 0; y < rows; y++) {
-            set([x, y], Object.create(Air));
+            set([x, y], {type: 'air'});
         }
     }
 
