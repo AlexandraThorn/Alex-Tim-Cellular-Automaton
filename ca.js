@@ -10,10 +10,10 @@ var rows = 25;
 // Size of cells, in pixels
 var cellSize = 20;
 
-
-var EMPTY = 0;
-var SAND = 1;
-var RABBIT = 2;
+var EDGE = 0; // must be zero, for falseiness
+var EMPTY = 1;
+var SAND = 2;
+var RABBIT = 3;
 
 var rabbitImage = document.getElementById('icon-rabbit');
 
@@ -23,10 +23,15 @@ for (var x = 0; x < cols; x++) {
     world[x] = Array(rows).fill(EMPTY)
 }
 
-function doClick(evt) {
-    if (evt.target != canvas) return;
+function canvasToCell(evt) {
     var cellX = Math.floor(evt.offsetX / cellSize);
     var cellY = Math.floor(evt.offsetY / cellSize);
+    return [cellX, cellY];
+}
+
+function doClick(evt) {
+    if (evt.target != canvas) return;
+    const [cellX, cellY] = canvasToCell(evt);
     world[cellX][cellY] = RABBIT;
     redrawCell(cellX, cellY);
 }
@@ -46,32 +51,73 @@ function redrawCell(x, y) {
     }
 }
 
+function inWorld(x, y) {
+    return x >= 0 && x < cols && y >= 0 && y < rows;
+}
+
+var DOWN = [0, 1];
+
+function follow(x, y, dir) {
+    x += dir[0];
+    y += dir[1];
+    return [x, y];
+}
+
+function get(pos) {
+    const [x, y] = pos;
+    if (inWorld(x, y)) {
+        return {pos: [x, y], what: world[x][y]};
+    } else {
+        return {pos: [x, y], what: EDGE};
+    }
+}
+
+function look(x, y, dir) {
+    return get(follow(x, y, dir));
+}
+
+function set(pos, what) {
+    const [x, y] = pos;
+    world[x][y] = what;
+    redrawCell(x, y);
+}
+
+function swap(cell1, cell2) {
+    if (cell1.pos[0] == cell2.pos[0] && cell1.pos[1] == cell2.pos[1])
+        throw Error("Tried to swap cell into itself");
+    var data1 = cell1.what;
+    var data2 = cell2.what;
+    set(cell1.pos, data2);
+    set(cell2.pos, data1);
+}
+
+/** Return cell within 1 step, including starting position. */
+function anyNeighborhood9(x, y) {
+    const hr = Math.floor(Math.random() * 3) - 1;
+    const vr = Math.floor(Math.random() * 3) - 1;
+    const pos = [
+        Math.min(Math.max(x + hr, 0), cols),
+        Math.min(Math.max(y + vr, 0), rows)
+    ];
+    return get(pos);
+}
+
 function updateWorld() {
     for (var x = cols - 1; x >= 0; x--) {
         for (var y = rows - 1; y >= 0; y--) {
-            var cur = world[x][y];
+            var curPos = [x, y];
+            var curWhat = world[x][y];
+            var curCell = {pos: curPos, what: curWhat};
 
-            if (cur == SAND) {
-                if (y + 1 < rows && world[x][y+1] == EMPTY) {
-                    world[x][y+1] = SAND;
-                    world[x][y] = EMPTY;
-                    redrawCell(x, y);
-                    redrawCell(x, y+1);
+            if (curWhat == SAND) {
+                const below = look(x, y, DOWN);
+                if (below.what == EMPTY) {
+                    swap(curCell, below);
                 }
-            } else if (cur == RABBIT) {
-                var hr = Math.floor(Math.random() * 3) - 1;
-                var vr = Math.floor(Math.random() * 3) - 1;
-                var nextX = x + hr;
-                var nextY = y + vr;
-                if (
-                    !(hr == 0 && vr == 0)
-                    && nextX >= 0 && nextX < cols && nextY >= 0 && nextY < rows
-                    && world[nextX][nextY] == EMPTY
-                ) {
-                    world[nextX][nextY] = RABBIT;
-                    world[x][y] = EMPTY;
-                    redrawCell(nextX, nextY);
-                    redrawCell(x, y);
+            } else if (curWhat == RABBIT) {
+                let nearby = anyNeighborhood9(x, y);
+                if (nearby.what == EMPTY) {
+                    swap(curCell, nearby);
                 }
             }
         }
