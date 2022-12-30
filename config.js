@@ -11,6 +11,9 @@ function drawSolid(color, px, py) {
 
 // All known element types.
 //
+// - initialize: Optional initializer, called when a cell is created.
+//   Given cell data with type already filled in; expected to mutate
+//   the dictionary.
 // - draw: Given upper-left pixel coordinates of the cell; expected to
 //   completely redraw this cell.
 // - act: Given a cell dict representing the current cell, take whatever
@@ -39,7 +42,7 @@ elements = {
     },
 
     'sand': {
-        defaultElement: true,
+        defaultSelection: true, // TODO maybe instead have `let defaultSelection = 'air'` at top level
         textFgColor: '#cc0',
         textBgColor: 'black',
         draw: function(data, px, py) {
@@ -149,3 +152,6 @@ elements = {
         },
     },
 };
+
+// This is the element to use when clearing the world (or initializing it).
+let clearElement = 'air';
