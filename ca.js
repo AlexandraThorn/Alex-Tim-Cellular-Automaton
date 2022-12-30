@@ -35,6 +35,7 @@ function pickRandom(array) {
 const ctrlPlayPause = document.getElementById("play-pause");
 // Stepper-mode checkbox control
 const cntrlStepToggle = document.getElementById('step-toggle');
+const inspectorNode = document.getElementById('inspector');
 
 // The canvas on which we project the world.
 const canvas = document.getElementById("world");
@@ -97,9 +98,13 @@ function doCanvasClick(evt) {
 // Draw on the canvas due to a mouse drag.
 function doCanvasMousemove(evt) {
     if (evt.target != canvas) return;
+
+    const pos = canvasToPos(evt)
+    inspectorNode.textContent = JSON.stringify(get(pos).data);
+
     if (isStepping) return;
     if ((evt.buttons & 1) == 0) return; // only left/main button
-    doDraw(canvasToPos(evt));
+    doDraw(pos);
 }
 
 
@@ -381,6 +386,7 @@ function initialize() {
 
     canvas.addEventListener('click', doCanvasClick);
     canvas.addEventListener('mousemove', doCanvasMousemove);
+    canvas.addEventListener('mouseout', evt => inspectorNode.textContent = "");
 
     cntrlStepToggle.addEventListener('change', doStepperToggle);
 
