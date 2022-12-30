@@ -110,7 +110,8 @@ function doCanvasMousemove(evt) {
 
 // ==== Direction logic ==== //
 
-// Relative directions.
+// Relative directions. These can be passed to look() and swap()
+// and to rotation and reflection functions.
 var east =      [+1,  0];
 var northeast = [+1, -1];
 var north =     [ 0, -1];
@@ -120,16 +121,46 @@ var southwest = [-1, +1];
 var south =     [ 0, +1];
 var southeast = [+1, +1];
 
-// Horizontal reflections across the y-axis. Randomly select from this
-// list and apply it to directions in your act() function.
-const reflectY = [
-    function pass(dir) {
-        return dir;
-    },
-    function flip([x, y]) {
-        return [-x, y];
-    },
+// Rotations and reflections.
+//
+// In your updater, write `const r = randomHorizontal()` to get a random
+// horizontal reflection. If you want to look either east or west, just
+// use `r(east)`, and it will always return east *or* always return west
+// for the duration of this iteration.
+//
+// If you instead want to check both east *and* west, loop over all horizontal
+// reflections (in random order) by using `for (const r of randomHorizontalAll())`.
+
+// Horizontal reflections across the y-axis.
+const _reflectionsY = [
+    function pass(dir) { return dir; },
+    function flip([x, y]) { return [-x, y]; },
 ];
+function randomHorizontalAll() {
+    return shuffled(_reflectionsY);
+}
+function randomHorizontal() {
+    return randomHorizontalAll()[0];
+}
+
+// Vertical reflections across the x-axis.
+const _reflectionsX = [
+    function pass(dir) { return dir; },
+    function flip([x, y]) { return [x, -y]; },
+];
+function randomVerticalAll() { return shuffled(_reflectionsX); }
+function randomVertical() { return randomVerticalAll()[0]; }
+
+// All four rotations by a quarter-turn.
+const _rotations4 = [
+    function r40(dir) { return dir; },
+    function r41([x, y]) { return [y, -x]; },
+    function r42([x, y]) { return [-x, -y]; },
+    function r43([x, y]) { return [-y, x]; },
+];
+function randomRotateQuarter() { return shuffled(_rotations4); }
+function randomRotateQuarterAll() { return randomRotateQuarter()[0]; }
+
 
 // Move in the indicated direction from the position, returning the new position.
 function follow(pos, dir) {

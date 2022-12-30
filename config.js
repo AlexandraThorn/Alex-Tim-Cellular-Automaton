@@ -54,7 +54,7 @@ elements = {
             }
 
             // Otherwise, see if it can slide diagonally.
-            var r = pickRandom(reflectY);
+            var r = randomHorizontal();
             const se = look(me.pos, r(southeast));
             if (se.data.type == 'air') {
                 swap(me.pos, se.pos);
@@ -78,7 +78,7 @@ elements = {
             }
 
             // Otherwise, see if it can slide diagonally.
-            var r = pickRandom(reflectY);
+            var r = randomHorizontal();
             const se = look(me.pos, r(southeast));
             if (se.data.type == 'air') {
                 swap(me.pos, se.pos);
@@ -107,7 +107,7 @@ elements = {
             }
 
             // Check left and right for carrots first
-            for (const r of shuffled(reflectY)) {
+            for (const r of randomHorizontalAll()) {
                 const side = look(me.pos, r(east));
                 if (side.data.type == 'carrot') {
                     return consume(side);
@@ -124,7 +124,7 @@ elements = {
             }
 
             // Still no carrots? Maybe walk around.
-            const lr = pickRandom(reflectY);
+            const lr = randomHorizontal();
             const side = look(me.pos, lr(east));
             if (side.data.type == 'air') {
                 swap(me.pos, side.pos);
