@@ -403,6 +403,7 @@ function initialize() {
         }
     });
 
+    doPlayPause();
     doReloadConfig();
 }
 
