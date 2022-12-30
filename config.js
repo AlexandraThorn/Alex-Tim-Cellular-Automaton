@@ -45,8 +45,17 @@ elements = {
         defaultSelection: true, // TODO maybe instead have `let defaultSelection = 'air'` at top level
         textFgColor: '#cc0',
         textBgColor: 'black',
+        initialize: function(data) {
+            data.moisture = 0;
+            data.maxCap=100;
+            data.waterHoldingCap=60;
+            data.wiltPoint=5
+        },
         draw: function(data, px, py) {
             drawSolid('#cc0', px, py);
+		//NEED DOCUMENTATION FOR hsv2rgb
+            //drawSolid(hsv2rgb(60,100,80), px, py);
+            //drawSolid("rgb(0,81,20)", px, py);
         },
         act: function(me) {
             // Just fall straight down if possible (above air or water).
@@ -66,6 +75,26 @@ elements = {
             if (se.data.type == 'air') {
                 swap(me.pos, se.pos);
                 return;
+            }
+		
+            function absorbWater(cell) {
+                set(cell.pos, {type: 'air'});
+                me.data.moisture += 30;
+            }
+            
+            if (me.data.moisture < (me.data.maxCap - 30)){
+                // Check above for water first
+                const above = look(me.pos, north);
+                if (above.data.type == 'water') {
+                    return absorbWater(above);
+                }
+                // Check left and right for water next 
+                for (const r of randomHorizontalAll()) {
+                    const side = look(me.pos, r(east));
+                    if (side.data.type == 'water') {
+                        return absorbWater(side);
+                    }
+                }
             }
         },
     },
