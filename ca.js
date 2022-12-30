@@ -78,11 +78,13 @@ var elements = undefined;
 
 // ==== Interactively drawing on the canvas ==== //
 
-// Draw on the indicated cell.
-function doDraw(pos) {
-    const [x, y] = pos
-    const data = world[x][y] = {type: selectedElementType};
-    redrawCell(data, pos);
+// Draw this element type on the indicated position.
+function drawElement(pos, type) {
+    const data = {type};
+    const initializer = elements[type].initialize;
+    if (initializer)
+        initializer(data);
+    set(pos, data);
 }
 
 // Draw on the canvas, or step, due to a click.
@@ -91,7 +93,7 @@ function doCanvasClick(evt) {
     if (isStepping) {
         stepCell(canvasToPos(evt));
     } else {
-        doDraw(canvasToPos(evt));
+        drawElement(canvasToPos(evt), selectedElementType);
     }
 }
 
@@ -104,7 +106,7 @@ function doCanvasMousemove(evt) {
 
     if (isStepping) return;
     if ((evt.buttons & 1) == 0) return; // only left/main button
-    doDraw(pos);
+    drawElement(pos, selectedElementType);
 }
 
 
@@ -373,7 +375,7 @@ let elementSelectorHadFocus = false;
 let selectedElementType = null;
 
 // Update the list of element selectors with the current elements
-function refreshElementSelectors() {
+function updateElementSelector() {
     const container = document.getElementById('elements');
     container.querySelectorAll('label.element-label')
         .forEach(el => container.removeChild(el));
@@ -407,9 +409,9 @@ function refreshElementSelectors() {
         }
 
         // In case the element is no longer available, respect the
-        // "defaultElement" attribute, but fall back to the first
+        // "defaultSelection" attribute, but fall back to the first
         // visible element otherwise.
-        if (!defaultButton || elAttrs.defaultElement)
+        if (!defaultButton || elAttrs.defaultSelection)
             defaultButton = elButton;
     }
 
@@ -426,33 +428,49 @@ function refreshElementSelectors() {
         selected.focus();
 }
 
-// Reload config.js to get newly written element behavior.
-function doReloadConfig() {
+// Called after config has been reloaded, to redraw world and update UI.
+function onReloadConfig() {
+    // This duplicates initializeStage1 due to a bootstrapping issue.
+    updateElementSelector();
+    redrawWorld();
+}
+
+// Run config.js and all the callback when that's done
+function loadConfig(onLoad) {
     const s = document.createElement('script');
     s.id = "config-loader";
     s.src = "config.js?cache-bust=" + Math.random();
-    s.addEventListener('load', function(evt) {
-        redrawWorld();
-        refreshElementSelectors();
-    });
+    s.addEventListener('load', onLoad);
     document.body.append(s);
     document.body.removeChild(s);
+}
+
+// Reload config due to UI event
+function doReloadConfig() {
+    loadConfig(onReloadConfig);
 }
 
 
 // ==== Initialization ==== //
 
-// Initial page setup
-function initialize() {
+// Load configuration so we can finish doing UI setup, world creation, etc.
+function initializeStage1() {
+    loadConfig(() => {
+        initializeStage2();
+        onReloadConfig();
+    });
+}
+
+// Set up UI, add listeners, create world, start event loop. Config is loaded
+// by this point.
+function initializeStage2() {
     canvas.width = cols * cellSize;
     canvas.height = rows * cellSize;
 
     for (var x = 0; x < cols; x++) {
         const row = world[x] = Array(rows);
         for (var y = 0; y < rows; y++) {
-            // Not using set(), since that requests redrawing, and
-            // elements aren't loaded yet.
-            world[x][y] = {type: 'air'};
+            drawElement([x, y], clearElement);
         }
     }
 
@@ -476,8 +494,7 @@ function initialize() {
     });
 
     doPlayPause();
-    doReloadConfig();
 }
 
 // This forces us to wait for all images to load, not just all HTML.
-window.addEventListener('load', initialize);
+window.addEventListener('load', initializeStage1);
