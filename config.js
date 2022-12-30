@@ -52,9 +52,10 @@ elements = {
             data.wiltPoint=5
         },
         draw: function(data, px, py) {
-            drawSolid('#cc0', px, py);
+            //drawSolid('#cc0', px, py);
 		//NEED DOCUMENTATION FOR hsv2rgb
-            //drawSolid(hsv2rgb(60,100,80), px, py);
+            data.colorValue=0.8-0.3*data.moisture/data.maxCap
+            drawSolid(hsv2rgb(60/360,1,data.colorValue), px, py);
             //drawSolid("rgb(0,81,20)", px, py);
         },
         act: function(me) {
@@ -82,20 +83,61 @@ elements = {
                 me.data.moisture += 30;
             }
             
-            if (me.data.moisture < (me.data.maxCap - 30)){
+            //soaking up water nearby
+            if (me.data.moisture < (me.data.maxCap - 30)) {
                 // Check above for water first
                 const above = look(me.pos, north);
                 if (above.data.type == 'water') {
                     return absorbWater(above);
                 }
                 // Check left and right for water next 
-                for (const r of randomHorizontalAll()) {
-                    const side = look(me.pos, r(east));
-                    if (side.data.type == 'water') {
-                        return absorbWater(side);
-                    }
+		if (me.data.moisture <= (me.data.waterHoldingCap - 30)) {
+                   for (const r of randomHorizontalAll()) {
+                       const side = look(me.pos, r(east));
+                       if (side.data.type == 'water') {
+                           return absorbWater(side);
+                       }
+                   }
                 }
             }
+
+            function drainWaterTo(cell) {
+                set(cell.pos, {type: 'water'});
+                me.data.moisture -= 30;
+            }
+
+            //drainage of water above holding capacity
+            if (me.data.moisture > me.data.waterHoldingCap) {
+                const side = randomHorizontal();
+                let excessWater = me.data.moisture - me.data.waterHoldingCap
+		if((below.data.type == 'sand') &&
+		    (below.data.moisture < me.data.moisture)){
+                    //physics assumes sand is on solid surface, not falling
+                    let spaceBelow = below.data.maxCap - below.data.moisture;
+		    let drainage=Math.min(excessWater,spaceBelow);
+                    me.data.moisture -= drainage;
+                    below.data.moisture += drainage;
+                } else if ((se.data.type == 'sand') &&
+		    (se.data.moisture < me.data.moisture)) {
+                    let spaceBelow = se.data.maxCap - se.data.moisture;
+		    let drainage = Math.min(excessWater,spaceBelow);
+                    me.data.moisture -= drainage;
+                    se.data.moisture += drainage; //need to consider drainage to sand to side
+                } else if (se.data.type == 'air') {
+                    return drainWaterTo(se);
+                } else if ((side.data.type == 'air') && ((me.data.moisture - me.data.waterHoldingCap) >=30)) {
+                    return drainWaterTo(side);
+                } else if (side.data.type == 'sand') {
+                    // not sure whether this should be changed to only
+                    // allow positive outflow
+                    let diffWater = me.data.moisture - side.data.type
+                    let sidewaysFlow = Math.min(excessWater, (diffWater/2))
+                    me.data.moisture -= sidewaysFlow
+                    side.data.moisture += sidewaysFlow
+                }
+
+            }
+            return;
         },
     },
 
