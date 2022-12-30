@@ -254,7 +254,7 @@ function doPlayPause() {
         ctrlPlayPause.textContent = "Play [p]";
     } else {
         // Play
-        runner = setInterval(updateWorld, 75);
+        runner = setInterval(updateWorld, 100);
         ctrlPlayPause.textContent = "Pause [p]";
     }
 }
