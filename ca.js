@@ -72,8 +72,9 @@ function canvasToPos(evt) {
 // have there be something for a search to find.
 // See config.js for the actual value and documention.
 
-// Definitions of all elements.
-var elements = undefined;
+let elements = undefined;
+let clearElement = undefined;
+let defaultSelection = undefined;
 
 
 // ==== Interactively drawing on the canvas ==== //
@@ -409,9 +410,9 @@ function updateElementSelector() {
         }
 
         // In case the element is no longer available, respect the
-        // "defaultSelection" attribute, but fall back to the first
+        // defaultSelection, but fall back to the first
         // visible element otherwise.
-        if (!defaultButton || elAttrs.defaultSelection)
+        if ((defaultSelection == elType) || !defaultButton)
             defaultButton = elButton;
     }
 

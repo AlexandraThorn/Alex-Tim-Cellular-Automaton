@@ -11,6 +11,8 @@ function drawSolid(color, px, py) {
 
 // All known element types.
 //
+// Functions:
+//
 // - initialize: Optional initializer, called when a cell is created.
 //   Given cell data with type already filled in; expected to mutate
 //   the dictionary.
@@ -20,6 +22,14 @@ function drawSolid(color, px, py) {
 //   actions this element will take on a time step. The dictionary
 //   contains an [x, y] pair under 'pos' and a data dict under 'data',
 //   which should always contain a 'type' string matching the element.
+//   This function is optional.
+//
+// Properties:
+//
+// - hidden: True if this element should not be displayed in the element
+//   selector.
+// - textFgColor, textBgColor: Text and background color for the label in
+//   the element selector.
 elements = {
     // The "edge" element is a synthetic element that is "just beyond" the
     // edge of the world.
@@ -42,7 +52,6 @@ elements = {
     },
 
     'sand': {
-        defaultSelection: true, // TODO maybe instead have `let defaultSelection = 'air'` at top level
         textFgColor: '#cc0',
         textBgColor: 'black',
         draw: function(data, px, py) {
@@ -154,4 +163,6 @@ elements = {
 };
 
 // This is the element to use when clearing the world (or initializing it).
-let clearElement = 'air';
+clearElement = 'air';
+// This is the element to have selected for drawing, by default.
+defaultSelection = 'sand';
