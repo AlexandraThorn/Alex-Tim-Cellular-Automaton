@@ -22,6 +22,8 @@ function drawSolid(color, px, py) {
 //   actions this element will take on a time step. The dictionary
 //   contains an [x, y] pair under 'pos' and a data dict under 'data',
 //   which should always contain a 'type' string matching the element.
+//   If mutating a neighbor's data directly, must request a redraw of
+//   that neighbor.
 //   This function is optional.
 //
 // Properties:

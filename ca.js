@@ -79,22 +79,13 @@ let defaultSelection = undefined;
 
 // ==== Interactively drawing on the canvas ==== //
 
-// Draw this element type on the indicated position.
-function drawElement(pos, type) {
-    const data = {type};
-    const initializer = elements[type].initialize;
-    if (initializer)
-        initializer(data);
-    set(pos, data);
-}
-
 // Draw on the canvas, or step, due to a click.
 function doCanvasClick(evt) {
     if (evt.target != canvas) return;
     if (isStepping) {
         stepCell(canvasToPos(evt));
     } else {
-        drawElement(canvasToPos(evt), selectedElementType);
+        set(canvasToPos(evt), make(selectedElementType));
     }
 }
 
@@ -107,7 +98,7 @@ function doCanvasMousemove(evt) {
 
     if (isStepping) return;
     if ((evt.buttons & 1) == 0) return; // only left/main button
-    drawElement(pos, selectedElementType);
+    set(pos, make(selectedElementType));
 }
 
 
@@ -224,7 +215,7 @@ function set(pos, data) {
     redrawCell(data, pos);
 }
 
-// Swap these two positions.
+// Swap these two positions and redraw them.
 function swap(pos1, pos2) {
     if (pos1[0] == pos2[0] && pos1[1] == pos2[1])
         throw Error("Tried to swap cell into itself");
@@ -232,6 +223,15 @@ function swap(pos1, pos2) {
     var cell2 = get(pos2);
     set(pos1, cell2.data);
     set(pos2, cell1.data);
+}
+
+// Make cell data of a given type.
+function make(type) {
+    const data = {type};
+    const initializer = elements[type].initialize;
+    if (initializer)
+        initializer(data);
+    return data;
 }
 
 // Return any cell within 1 step, including diagonals and current position.
@@ -471,7 +471,7 @@ function initializeStage2() {
     for (var x = 0; x < cols; x++) {
         const row = world[x] = Array(rows);
         for (var y = 0; y < rows; y++) {
-            drawElement([x, y], clearElement);
+            set([x, y], make(clearElement));
         }
     }
 
