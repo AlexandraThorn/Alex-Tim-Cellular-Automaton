@@ -136,30 +136,43 @@ const _reflectionsY = [
     function pass(dir) { return dir; },
     function flip([x, y]) { return [-x, y]; },
 ];
-function randomHorizontalAll() {
-    return shuffled(_reflectionsY);
-}
-function randomHorizontal() {
-    return randomHorizontalAll()[0];
-}
+function randomHorizontal() { return pickRandom(_reflectionsY); }
+function randomHorizontalAll() { return shuffled(_reflectionsY); }
 
 // Vertical reflections across the x-axis.
 const _reflectionsX = [
     function pass(dir) { return dir; },
     function flip([x, y]) { return [x, -y]; },
 ];
+function randomVertical() { return pickRandom(_reflectionsX); }
 function randomVerticalAll() { return shuffled(_reflectionsX); }
-function randomVertical() { return randomVerticalAll()[0]; }
 
-// All four rotations by a quarter-turn.
+// All four rotations by a quarter-turn. Useful for when you're looking at
+// all edge-neighbors or all corner-neighbors.
 const _rotations4 = [
     function r40(dir) { return dir; },
     function r41([x, y]) { return [y, -x]; },
     function r42([x, y]) { return [-x, -y]; },
     function r43([x, y]) { return [-y, x]; },
 ];
-function randomRotateQuarter() { return shuffled(_rotations4); }
-function randomRotateQuarterAll() { return randomRotateQuarter()[0]; }
+function randomRotateQuarter() { return pickRandom(_rotations4); }
+function randomRotateQuarterAll() { return shuffled(_rotations4); }
+
+// All four rotations by a quarter-turn, mirrored (8 in total).
+// Useful if you're looking at the three neightbors around some corner,
+// in any orientation.
+const _mirrorRotate8 = [
+    function mr80a([x, y]) { return [ x,  y]; },
+    function mr80b([x, y]) { return [-x,  y]; },
+    function mr81a([x, y]) { return [ y, -x]; },
+    function mr81b([x, y]) { return [-y, -x]; },
+    function mr82a([x, y]) { return [-x, -y]; },
+    function mr82b([x, y]) { return [ x, -y]; },
+    function mr83a([x, y]) { return [-y,  x]; },
+    function mr83b([x, y]) { return [ y,  x]; },
+];
+function randomMirrorRotate() { return pickRandom(_mirrorRotate8); }
+function randomMirrorRotateAll() { return shuffled(_mirrorRotate8); }
 
 
 // Move in the indicated direction from the position, returning the new position.
@@ -227,6 +240,34 @@ function anyNeighborhood9(pos) {
         Math.min(Math.max(x + hr, 0), cols),
         Math.min(Math.max(y + vr, 0), rows)
     ]);
+}
+
+
+// ==== Rendering helpers ==== //
+
+// Convert color specified as hue, saturation, and luminance into an rgb
+// string suitable for canvas. All inputs are in range [0, 1].
+//
+// Based on https://stackoverflow.com/questions/67220568/hsb-color-fill-in-javascript-canvas
+function hsv2rgb(h, s, v) {
+    var r, g, b, i, f, p, q, t;
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    r = Math.floor(r * 255);
+    g = Math.floor(g * 255);
+    b = Math.floor(b * 255);
+    return `rgb(${r},${g},${b})`;
 }
 
 
