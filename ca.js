@@ -103,7 +103,7 @@ function doCanvasMousemove(evt) {
     if (evt.target != canvas) return;
 
     const pos = canvasToPos(evt)
-    inspectorNode.textContent = JSON.stringify(get(pos).data);
+    inspectorNode.textContent = `${pos[0]}, ${pos[1]}: ` + JSON.stringify(get(pos).data);
 
     if (isStepping) return;
     if ((evt.buttons & 1) == 0) return; // only left/main button
