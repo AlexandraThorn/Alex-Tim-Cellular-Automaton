@@ -1,8 +1,8 @@
 // Definitions:
 //
 // - pos: A world position [x, y] -- cell coordinates, rather than pixel coordinates
-// - dat: Cell data, a map that contains at least a 'type' field ("air", "sand", etc.)
-// - cell: A position and its contents, as {pos, dat}
+// - data: Cell data, a map that contains at least a 'type' field ("air", "sand", etc.)
+// - cell: A position and its contents, as {pos, data}
 
 "use strict";
 
@@ -41,11 +41,11 @@ const ctx = canvas.getContext('2d'); // drawing context
 // ==== World settings ==== //
 
 // Size of world, in cells
-const cols = 25;
-const rows = 25;
+const cols = 50;
+const rows = 50;
 
 // Size of cells, in pixels
-const cellSize = 20;
+const cellSize = 8;
 
 
 // ==== World and accessors ==== //
@@ -79,8 +79,8 @@ var currentlyDrawing = undefined;
 // Draw on the indicated cell.
 function doDraw(pos) {
     const [x, y] = pos
-    const dat = world[x][y] = {type: currentlyDrawing};
-    redrawCell(dat, pos);
+    const data = world[x][y] = {type: currentlyDrawing};
+    redrawCell(data, pos);
 }
 
 // Draw on the canvas, or step, due to a click.
@@ -138,9 +138,9 @@ function follow(pos, dir) {
 
 // Ask a cell to redraw itself. Called when this position in the world
 // has been changed and the canvas needs to be updated to reflect it.
-function redrawCell(dat, pos) {
+function redrawCell(data, pos) {
     const [x, y] = pos;
-    elements[dat.type].draw(x * cellSize, y * cellSize);
+    elements[data.type].draw(data, x * cellSize, y * cellSize);
 }
 
 // Is this a legal position in the world?
@@ -148,14 +148,14 @@ function inWorld(x, y) {
     return x >= 0 && x < cols && y >= 0 && y < rows;
 }
 
-// Get a cell {pos, dat} from a position.
+// Get a cell {pos, data} from a position.
 function get(pos) {
     const [x, y] = pos;
     if (inWorld(x, y)) {
-        return {pos, dat: world[x][y]};
+        return {pos, data: world[x][y]};
     } else {
         // Synthetic return value representing off-world coordinates.
-        return {pos, dat: {type: 'edge'}};
+        return {pos, data: {type: 'edge'}};
     }
 }
 
@@ -165,10 +165,10 @@ function look(pos, dir) {
 }
 
 // Set a position to this cell data, and redraw it.
-function set(pos, dat) {
+function set(pos, data) {
     const [x, y] = pos;
-    world[x][y] = dat;
-    redrawCell(dat, pos);
+    world[x][y] = data;
+    redrawCell(data, pos);
 }
 
 // Swap these two positions.
@@ -177,8 +177,8 @@ function swap(pos1, pos2) {
         throw Error("Tried to swap cell into itself");
     var cell1 = get(pos1);
     var cell2 = get(pos2);
-    set(pos1, cell2.dat);
-    set(pos2, cell1.dat);
+    set(pos1, cell2.data);
+    set(pos2, cell1.data);
 }
 
 // Return any cell within 1 step, including diagonals and current position.
@@ -218,12 +218,12 @@ function precomputeVisitOrders() {
 
 function stepCell(pos) {
     const [x, y] = pos;
-    const dat = world[x][y];
-    const element = elements[dat.type];
+    const data = world[x][y];
+    const element = elements[data.type];
     if (element) {
         const act = element['act'];
         if (act) {
-            act({pos, dat});
+            act({pos, data});
         }
     }
 }
@@ -247,7 +247,7 @@ function doPlayPause() {
         playPause.textContent = "Play [p]";
     } else {
         // Play
-        runner = setInterval(updateWorld, 200);
+        runner = setInterval(updateWorld, 75);
         playPause.textContent = "Pause [p]";
     }
 }

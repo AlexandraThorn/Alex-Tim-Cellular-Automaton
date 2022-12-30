@@ -3,11 +3,11 @@
 
 "use strict";
 
-// This image needs to be loaded on the page somewhere in order to be able to
-// copy it onto the canvas.
-var rabbitImage = document.getElementById('icon-rabbit');
-if (rabbitImage.width != cellSize || rabbitImage.height != cellSize)
-    throw Error("Rabbit image does not match cell size");
+// Fill a cell with a solid color, with upper left (px, py).
+function drawSolid(color, px, py) {
+    ctx.fillStyle = color;
+    ctx.fillRect(px, py, cellSize, cellSize);
+}
 
 // All known element types.
 //
@@ -15,13 +15,13 @@ if (rabbitImage.width != cellSize || rabbitImage.height != cellSize)
 //   completely redraw this cell.
 // - act: Given a cell dict representing the current cell, take whatever
 //   actions this element will take on a time step. The dictionary
-//   contains an [x, y] pair under 'pos' and a data dict under 'dat',
+//   contains an [x, y] pair under 'pos' and a data dict under 'data',
 //   which should always contain a 'type' string matching the element.
 elements = {
     // The "edge" element is a synthetic element that is "just beyond" the
     // edge of the world.
     'edge': {
-        draw: function(px, py) {
+        draw: function(data, px, py) {
             throw Error("'edge' element should not be shown.");
         },
         act: function(me) {
@@ -30,21 +30,19 @@ elements = {
     },
 
     'air': {
-        draw: function(px, py) {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(px, py, cellSize, cellSize);
+        draw: function(data, px, py) {
+            drawSolid('white', px, py);
         },
     },
 
     'sand': {
-        draw: function(px, py) {
-            ctx.fillStyle = '#cc0';
-            ctx.fillRect(px, py, cellSize, cellSize);
+        draw: function(data, px, py) {
+            drawSolid('#cc0', px, py);
         },
         act: function(me) {
             // Just fall straight down if possible.
             const below = look(me.pos, south);
-            if (below.dat.type == 'air') {
+            if (below.data.type == 'air') {
                 swap(me.pos, below.pos);
                 return;
             }
@@ -52,7 +50,7 @@ elements = {
             // Otherwise, see if it can slide diagonally.
             var r = pickRandom(reflectY);
             const se = look(me.pos, r(southeast));
-            if (se.dat.type == 'air') {
+            if (se.data.type == 'air') {
                 swap(me.pos, se.pos);
                 return;
             }
@@ -60,14 +58,13 @@ elements = {
     },
 
     'carrot': {
-        draw: function(px, py) {
-            ctx.fillStyle = '#fa0';
-            ctx.fillRect(px, py, cellSize, cellSize);
+        draw: function(data, px, py) {
+            drawSolid('#fa0', px, py);
         },
         act: function(me) {
             // Just fall straight down if possible.
             const below = look(me.pos, south);
-            if (below.dat.type == 'air') {
+            if (below.data.type == 'air') {
                 swap(me.pos, below.pos);
                 return;
             }
@@ -75,7 +72,7 @@ elements = {
             // Otherwise, see if it can slide diagonally.
             var r = pickRandom(reflectY);
             const se = look(me.pos, r(southeast));
-            if (se.dat.type == 'air') {
+            if (se.data.type == 'air') {
                 swap(me.pos, se.pos);
                 return;
             }
@@ -83,13 +80,13 @@ elements = {
     },
 
     'rabbit': {
-        draw: function(px, py) {
-            ctx.drawImage(rabbitImage, px, py);
+        draw: function(data, px, py) {
+            drawSolid('pink', px, py);
         },
         act: function(me) {
             for (const r of shuffled(reflectY)) {
                 const side = look(me.pos, r(east));
-                if (side.dat.type == 'carrot') {
+                if (side.data.type == 'carrot') {
                     set(side.pos, {type: 'air'});
                     swap(me.pos, side.pos);
                     return;
@@ -97,7 +94,7 @@ elements = {
             }
 
             let nearby = anyNeighborhood9(me.pos);
-            if (nearby.dat.type == 'air') {
+            if (nearby.data.type == 'air') {
                 swap(me.pos, nearby.pos);
                 return;
             }
