@@ -94,6 +94,14 @@ elements = {
             drawSolid('pink', px, py);
         },
         act: function(me) {
+            // Rabbits fall down in air
+            const down = look(me.pos, south);
+            if (down.data.type == 'air') {
+                swap(me.pos, down.pos);
+                return;
+            }
+
+            // Check left and right for carrots first
             for (const r of shuffled(reflectY)) {
                 const side = look(me.pos, r(east));
                 if (side.data.type == 'carrot') {
@@ -103,9 +111,24 @@ elements = {
                 }
             }
 
-            let nearby = anyNeighborhood9(me.pos);
-            if (nearby.data.type == 'air') {
-                swap(me.pos, nearby.pos);
+            // Check below for carrots
+            if (down.data.type == 'carrot') {
+                set(down.pos, {type: 'air'});
+                swap(me.pos, down.pos);
+                return;
+            }
+
+            // Still no carrots? Maybe walk around.
+            const lr = pickRandom(reflectY);
+            const side = look(me.pos, lr(east));
+            if (side.data.type == 'air') {
+                swap(me.pos, side.pos);
+                return;
+            }
+            // Can hop up a little too.
+            const upside = look(me.pos, lr(northeast));
+            if (upside.data.type == 'air') {
+                swap(me.pos, upside.pos);
                 return;
             }
         },
