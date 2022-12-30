@@ -1,11 +1,10 @@
 // Manually run.
 
-function assert(bool) {
-    if (!bool) throw Error("Assertion failed");
-}
-
 function assertEqual(a, b) {
-    assert(JSON.stringify(a) == JSON.stringify(b));
+    const ja = JSON.stringify(a);
+    const jb = JSON.stringify(b);
+    if (ja != jb)
+        throw Error(`Unequal:\n  ${ja}\n  ${jb}`);
 }
 
 
@@ -21,3 +20,17 @@ assertEqual(_reflectionsX.map(r => r(north)), [north, south])
 
 assertEqual(_rotations4.map(r => r(east)), [east, north, west, south])
 assertEqual(_rotations4.map(r => r(northeast)), [northeast, northwest, southwest, southeast])
+
+assertEqual(
+    _mirrorRotate8.map(r => [r(south), r(southeast)]),
+    [
+        [south, southeast],
+        [south, southwest],
+        [east, northeast],
+        [west, northwest],
+        [north, northwest],
+        [north, northeast],
+        [west, southwest],
+        [east, southeast],
+    ]
+)
