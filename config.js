@@ -118,8 +118,9 @@ elements = {
             }
 
             //drainage of water above holding capacity
+            var r = randomHorizontal();
+            const side = look(me.pos, r(east));
             if (me.data.moisture > me.data.waterHoldingCap) {
-                const side = randomHorizontal();
                 let excessWater = me.data.moisture - me.data.waterHoldingCap
 		if((below.data.type == 'sand') &&
 		    (below.data.moisture < me.data.moisture)){
@@ -133,7 +134,7 @@ elements = {
                     let spaceBelow = se.data.maxCap - se.data.moisture;
 		    let drainage = Math.min(excessWater,spaceBelow);
                     me.data.moisture -= drainage;
-                    se.data.moisture += drainage; //need to consider drainage to sand to side
+                    se.data.moisture += drainage;
                 } else if (se.data.type == 'air') {
                     return drainWaterTo(se);
                 } else if ((side.data.type == 'air') && ((me.data.moisture - me.data.waterHoldingCap) >=30)) {
@@ -141,7 +142,7 @@ elements = {
                 } else if (side.data.type == 'sand') {
                     // not sure whether this should be changed to only
                     // allow positive outflow
-                    let diffWater = me.data.moisture - side.data.type
+                    let diffWater = me.data.moisture - side.data.moisture
                     let sidewaysFlow = Math.min(excessWater, (diffWater/2))
                     me.data.moisture -= sidewaysFlow
                     side.data.moisture += sidewaysFlow
