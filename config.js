@@ -46,6 +46,34 @@ elements = {
             drawSolid('#cc0', px, py);
         },
         act: function(me) {
+            // Just fall straight down if possible (above air or water).
+            const below = look(me.pos, south);
+            if (below.data.type == 'air') {
+                swap(me.pos, below.pos);
+                return;
+            }
+            if (below.data.type == 'water') {
+                swap(me.pos, below.pos);
+                return;
+            }
+
+            // Otherwise, see if it can slide diagonally.
+            var r = randomHorizontal();
+            const se = look(me.pos, r(southeast));
+            if (se.data.type == 'air') {
+                swap(me.pos, se.pos);
+                return;
+            }
+        },
+    },
+
+    'water': {
+        textFgColor: 'white',
+        textBgColor: 'blue',
+        draw: function(data, px, py) {
+            drawSolid('blue', px, py);
+        },
+        act: function(me) {
             // Just fall straight down if possible.
             const below = look(me.pos, south);
             if (below.data.type == 'air') {
@@ -58,6 +86,14 @@ elements = {
             const se = look(me.pos, r(southeast));
             if (se.data.type == 'air') {
                 swap(me.pos, se.pos);
+                return;
+            }
+		
+            // Otherwise, see if it can slide sideways.
+            var r = randomHorizontal();
+            const side = look(me.pos, r(east));
+            if (side.data.type == 'air') {
+                swap(me.pos, side.pos);
                 return;
             }
         },
