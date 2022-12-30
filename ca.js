@@ -243,6 +243,34 @@ function anyNeighborhood9(pos) {
 }
 
 
+// ==== Rendering helpers ==== //
+
+// Convert color specified as hue, saturation, and luminance into an rgb
+// string suitable for canvas. All inputs are in range [0, 1].
+//
+// Based on https://stackoverflow.com/questions/67220568/hsb-color-fill-in-javascript-canvas
+function hsv2rgb(h, s, v) {
+    var r, g, b, i, f, p, q, t;
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    r = Math.floor(r * 255);
+    g = Math.floor(g * 255);
+    b = Math.floor(b * 255);
+    return `rgb(${r},${g},${b})`;
+}
+
+
 // ==== Cell-visiting ==== //
 
 // Get an array of all [x, y] positions in the world.
