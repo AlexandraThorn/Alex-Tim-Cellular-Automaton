@@ -36,8 +36,11 @@
     <canvas id="world"></canvas>
     <div id="controls">
       <button onclick="doPlayPause()" id="play-pause">Play [p]</button>
-      <label><input type="checkbox" id="step-toggle"> Step mode [s]</label>
-      <button onclick="doReloadConfig()">Reload config [r]</button>
+      <label><input type="checkbox" id="step-toggle">Step mode [s]</label>
+      <button onclick="doReloadConfig()"
+              title="If you edit config.js, this button will live-reload it while the simulation continues to run.">
+        Reload config [r]
+      </button>
     </div>
     <div id="elements">
       <!-- Element selectors get added here -->
