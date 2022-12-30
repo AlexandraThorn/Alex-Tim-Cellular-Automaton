@@ -66,36 +66,91 @@ elements = {
         textBgColor: '#080',
         initialize: function(data) {
             data.migratory = true;
+            data.carrying = 0;
         },
         draw: function(data, px, py) {
-            drawSolid('#080', px, py);
+            const brightness = 0.8 - Math.log(data.carrying + 1)/6;
+            drawSolid(hsv2rgb(0.4, 0.9, Math.min(1, brightness)), px, py);
         },
         act: function(me) {
             // If touching *any* wall, stop moving.
+            let touchingWall = false;
             for (const r of randomRotateQuarterAll()) {
                 const edge = look(me.pos, r(south));
                 const corner = look(me.pos, r(southeast));
                 if (edge.data.type == 'wall' || corner.data.type == 'wall') {
-                    me.data.migratory = false;
-                    return;
+                    touchingWall = true;
+                    break;
                 }
             }
+            me.data.migratory = !touchingWall;
+            redrawCell(me.data, me.pos);
 
-            // If touching a non-migratory gloop on-edge, get absorbed into it.
-            for (const r of randomRotateQuarterAll()) {
+            // Non-migratory gloop can spread along the wall if it has absorbed
+            // another gloop.
+            if (touchingWall) {
+                // If touching other stationary gloop, average the carried gloop.
+                const r = randomRotateQuarter();
                 const neighbor = look(me.pos, r(south));
                 if (neighbor.data.type == 'gloop' && !neighbor.data.migratory) {
-                    drawElement(me.pos, 'air');
+                    const total = me.data.carrying + neighbor.data.carrying;
+                    const mine = Math.floor(total / 2);
+                    me.data.carrying = mine;
+                    neighbor.data.carrying = total - mine;
+                    redrawCell(me.data, me.pos);
+                    redrawCell(neighbor.data, neighbor.pos);
+                }
+
+                if (me.data.carrying > 0) {
+                    // Check if there is any pair of two neighbors that are adjacent
+                    // to each other, with one wall and one air. If so, turn air
+                    // into gloop.
+                    for (const r of randomRotateQuarterAll()) {
+                        const s = look(me.pos, r(south));
+                        const se = look(me.pos, r(southeast));
+                        if (s.data.type == 'wall') {
+                            for (const d of [east, west, southeast, southwest]) {
+                                const cotouch = look(me.pos, r(d));
+                                if (cotouch.data.type == 'air') {
+                                    set(cotouch.pos, make('gloop'));
+                                    me.data.carrying--;
+                                    redrawCell(me.data, me.pos);
+                                    break;
+                                }
+                            }
+                        } else if (se.data.type == 'wall') {
+                            for (const d of [east, south]) {
+                                const cotouch = look(me.pos, r(d));
+                                if (cotouch.data.type == 'air') {
+                                    set(cotouch.pos, make('gloop'));
+                                    me.data.carrying--;
+                                    redrawCell(me.data, me.pos);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                // If migratory and touching a non-migratory gloop on-edge,
+                // get absorbed into it.
+                for (const r of randomRotateQuarterAll()) {
+                    const neighbor = look(me.pos, r(south));
+                    if (neighbor.data.type == 'gloop' && !neighbor.data.migratory) {
+                        set(me.pos, make('air'));
+                        neighbor.data.carrying++;
+                        redrawCell(neighbor.data, neighbor.pos);
+                        return;
+                    }
+                }
+
+                // Otherwise, wander through air.
+                const r = randomRotateQuarter();
+                const neighbor = look(me.pos, r(south));
+                if (neighbor.data.type == 'air') {
+                    swap(me.pos, neighbor.pos);
                     return;
                 }
-            }
-
-            // Otherwise, wander through air.
-            const r = randomRotateQuarter();
-            const neighbor = look(me.pos, r(south));
-            if (neighbor.data.type == 'air') {
-                swap(me.pos, neighbor.pos);
-                return;
             }
         },
     },
