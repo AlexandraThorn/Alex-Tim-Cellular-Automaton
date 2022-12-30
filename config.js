@@ -53,111 +53,48 @@ elements = {
         },
     },
 
-    'sand': {
-        textFgColor: '#cc0',
-        textBgColor: 'black',
+    'wall': {
+        textFgColor: 'white',
+        textBgColor: '#333',
         draw: function(data, px, py) {
-            drawSolid('#cc0', px, py);
-        },
-        act: function(me) {
-            // Just fall straight down if possible.
-            const below = look(me.pos, south);
-            if (below.data.type == 'air') {
-                swap(me.pos, below.pos);
-                return;
-            }
-
-            // Otherwise, see if it can slide diagonally.
-            var r = randomHorizontal();
-            const se = look(me.pos, r(southeast));
-            if (se.data.type == 'air') {
-                swap(me.pos, se.pos);
-                return;
-            }
+            drawSolid('#333', px, py);
         },
     },
 
-    'carrot': {
-        textFgColor: '#fa0',
-        textBgColor: 'black',
+    'gloop': {
+        textFgColor: 'white',
+        textBgColor: '#080',
+        initialize: function(data) {
+            data.migratory = true;
+        },
         draw: function(data, px, py) {
-            drawSolid('#fa0', px, py);
+            drawSolid('#080', px, py);
         },
         act: function(me) {
-            // Just fall straight down if possible.
-            const below = look(me.pos, south);
-            if (below.data.type == 'air') {
-                swap(me.pos, below.pos);
-                return;
-            }
-
-            // Otherwise, see if it can slide diagonally.
-            var r = randomHorizontal();
-            const se = look(me.pos, r(southeast));
-            if (se.data.type == 'air') {
-                swap(me.pos, se.pos);
-                return;
-            }
-        },
-    },
-
-    'rabbit': {
-        textFgColor: 'black',
-        textBgColor: 'pink',
-        draw: function(data, px, py) {
-            drawSolid('pink', px, py);
-        },
-        act: function(me) {
-            // Rabbits fall down in air
-            const down = look(me.pos, south);
-            if (down.data.type == 'air') {
-                swap(me.pos, down.pos);
-                return;
-            }
-
-            function consume(cell) {
-                set(cell.pos, {type: 'air'});
-                swap(me.pos, cell.pos);
-            }
-
-            // Check left and right for carrots first
-            for (const r of randomHorizontalAll()) {
-                const side = look(me.pos, r(east));
-                if (side.data.type == 'carrot') {
-                    return consume(side);
+            // If touching *any* wall, stop moving.
+            for (const r of randomRotateQuarterAll()) {
+                const edge = look(me.pos, r(south));
+                const corner = look(me.pos, r(southeast));
+                if (edge.data.type == 'wall' || corner.data.type == 'wall') {
+                    me.data.migratory = false;
+                    return;
                 }
             }
 
-            // Check above and below for carrots
-            if (down.data.type == 'carrot') {
-                return consume(down);
-            }
-            const up = look(me.pos, north);
-            if (up.data.type == 'carrot') {
-                return consume(up);
-            }
-
-            // Still no carrots? Maybe walk around.
-            const lr = randomHorizontal();
-            const side = look(me.pos, lr(east));
-            if (side.data.type == 'air') {
-                swap(me.pos, side.pos);
-                return;
-            }
-            // Can hop up a little too.
-            const upside = look(me.pos, lr(northeast));
-            if (upside.data.type == 'air') {
-                swap(me.pos, upside.pos);
-                return;
+            // If touching a non-migratory gloop on-edge, get absorbed into it.
+            for (const r of randomRotateQuarterAll()) {
+                const neighbor = look(me.pos, r(south));
+                if (neighbor.data.type == 'gloop' && !neighbor.data.migratory) {
+                    drawElement(me.pos, 'air');
+                    return;
+                }
             }
 
-            // Trapped under sand? Can dig out, slowly.
-            if (up.data.type == 'sand' && Math.random() < 0.4) {
-                swap(me.pos, up.pos);
-                return;
-            }
-            if (upside.data.type == 'sand' && Math.random() < 0.2) {
-                swap(me.pos, upside.pos);
+            // Otherwise, wander through air.
+            const r = randomRotateQuarter();
+            const neighbor = look(me.pos, r(south));
+            if (neighbor.data.type == 'air') {
+                swap(me.pos, neighbor.pos);
                 return;
             }
         },
@@ -167,4 +104,4 @@ elements = {
 // This is the element to use when clearing the world (or initializing it).
 clearElement = 'air';
 // This is the element to have selected for drawing, by default.
-defaultSelection = 'sand';
+defaultSelection = 'wall';
