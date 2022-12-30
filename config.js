@@ -27,15 +27,21 @@ elements = {
         act: function(me) {
             throw Error("'edge' element should not be run.");
         },
+        hidden: true,
     },
 
     'air': {
+        textFgColor: 'black',
+        textBgColor: 'white',
         draw: function(data, px, py) {
             drawSolid('white', px, py);
         },
     },
 
     'sand': {
+        defaultElement: true,
+        textFgColor: '#cc0',
+        textBgColor: 'black',
         draw: function(data, px, py) {
             drawSolid('#cc0', px, py);
         },
@@ -58,6 +64,8 @@ elements = {
     },
 
     'carrot': {
+        textFgColor: '#fa0',
+        textBgColor: 'black',
         draw: function(data, px, py) {
             drawSolid('#fa0', px, py);
         },
@@ -80,6 +88,8 @@ elements = {
     },
 
     'rabbit': {
+        textFgColor: 'black',
+        textBgColor: 'pink',
         draw: function(data, px, py) {
             drawSolid('pink', px, py);
         },
@@ -101,5 +111,3 @@ elements = {
         },
     },
 };
-
-currentlyDrawing = 'carrot';

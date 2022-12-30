@@ -67,15 +67,12 @@ function canvasToPos(evt) {
 
 // ==== Reloadable settings ==== //
 
-// These will actually be overwritten by config.js; they're just declared here to
+// This will actually be overwritten by config.js; it's just declared here to
 // have there be something for a search to find.
 // See config.js for the actual value and documention.
 
 // Definitions of all elements.
 var elements = undefined;
-
-// Element we're currently drawing. UI pending.
-var currentlyDrawing = undefined;
 
 
 // ==== Interactively drawing on the canvas ==== //
@@ -83,7 +80,7 @@ var currentlyDrawing = undefined;
 // Draw on the indicated cell.
 function doDraw(pos) {
     const [x, y] = pos
-    const data = world[x][y] = {type: currentlyDrawing};
+    const data = world[x][y] = {type: selectedElementType};
     redrawCell(data, pos);
 }
 
@@ -290,6 +287,68 @@ function redrawWorld() {
     }
 }
 
+// Keep track of whether element radio buttons were focused, so that we can
+// preserve that focus when recreating the buttons.
+let elementSelectorHadFocus = false;
+
+// Which element is currently selected for drawing. Will default to first element
+// that isn't hidden.
+let selectedElementType = null;
+
+// Update the list of element selectors with the current elements
+function refreshElementSelectors() {
+    const container = document.getElementById('elements');
+    container.querySelectorAll('label.element-label')
+        .forEach(el => container.removeChild(el));
+
+    let defaultButton = null;
+    let didPreserveSelection = false;
+    let selected = null;
+    for (const [elType, elAttrs] of Object.entries(elements)) {
+        if (elAttrs.hidden) continue
+
+        let elLabel = document.createElement('label');
+        elLabel.classList.add('element-label');
+        elLabel.style.color = elAttrs.textFgColor || 'black';
+        elLabel.style.backgroundColor = elAttrs.textBgColor || 'white';
+        let elButton = document.createElement('input');
+        elButton.classList.add('element-button');
+        elButton.setAttribute('type', 'radio');
+        elButton.setAttribute('name', 'draw-element');
+        elButton.setAttribute('value', elType);
+        elButton.addEventListener('change', (evt) => selectedElementType = evt.target.value);
+        elButton.addEventListener('blur', (evt) => elementSelectorHadFocus = false);
+        elButton.addEventListener('focus', (evt) => elementSelectorHadFocus = true);
+        elLabel.appendChild(elButton);
+        elLabel.appendChild(document.createTextNode(elType));
+        container.appendChild(elLabel);
+
+        if (elType == selectedElementType) {
+            elButton.checked = true;
+            didPreserveSelection = true;
+            selected = elButton;
+        }
+
+        // In case the element is no longer available, respect the
+        // "defaultElement" attribute, but fall back to the first
+        // visible element otherwise.
+        if (!defaultButton || elAttrs.defaultElement)
+            defaultButton = elButton;
+    }
+
+    if (!didPreserveSelection) {
+        // The element we were drawing with previously no longer
+        // exists (at least under that name), so just switch to the
+        // first one that's visible.
+        defaultButton.checked = true;
+        selectedElementType = defaultButton.value;
+        selected = defaultButton;
+    }
+
+    if (elementSelectorHadFocus)
+        selected.focus();
+}
+
 // Reload config.js to get newly written element behavior.
 function doReloadConfig() {
     const s = document.createElement('script');
@@ -297,6 +356,7 @@ function doReloadConfig() {
     s.src = "config.js?cache-bust=" + Math.random();
     s.addEventListener('load', function(evt) {
         redrawWorld();
+        refreshElementSelectors();
     });
     document.body.append(s);
     document.body.removeChild(s);
