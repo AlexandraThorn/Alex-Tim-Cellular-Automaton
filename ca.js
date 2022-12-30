@@ -31,11 +31,15 @@ function pickRandom(array) {
 
 // ==== DOM references ==== //
 
-const playPause = document.getElementById("play-pause");
-const controlStepToggle = document.getElementById('step-toggle');
+// Play/pause button
+const ctrlPlayPause = document.getElementById("play-pause");
+// Stepper-mode checkbox control
+const cntrlStepToggle = document.getElementById('step-toggle');
 
+// The canvas on which we project the world.
 const canvas = document.getElementById("world");
-const ctx = canvas.getContext('2d'); // drawing context
+// Interface for drawing on the canvas.
+const ctx = canvas.getContext('2d');
 
 
 // ==== World settings ==== //
@@ -105,13 +109,13 @@ function doCanvasMousemove(evt) {
 // ==== Direction logic ==== //
 
 // Relative directions.
-var east = [+1, 0];
+var east =      [+1,  0];
 var northeast = [+1, +1];
-var north = [0, -1];
+var north =     [ 0, -1];
 var northwest = [-1, -1];
-var west = [-1, 0];
+var west =      [-1,  0];
 var southwest = [+1, -1];
-var south = [0, +1];
+var south =     [ 0, +1];
 var southeast = [+1, +1];
 
 // Horizontal reflections across the y-axis. Randomly select from this
@@ -216,6 +220,7 @@ function precomputeVisitOrders() {
 
 // ==== Core loop ==== //
 
+// Let a single cell take its actions.
 function stepCell(pos) {
     const [x, y] = pos;
     const data = world[x][y];
@@ -244,27 +249,29 @@ function doPlayPause() {
         // Pause
         clearInterval(runner);
         runner = null;
-        playPause.textContent = "Play [p]";
+        ctrlPlayPause.textContent = "Play [p]";
     } else {
         // Play
         runner = setInterval(updateWorld, 75);
-        playPause.textContent = "Pause [p]";
+        ctrlPlayPause.textContent = "Pause [p]";
     }
 }
 
+// Whether stepper-mode is on.
 let isStepping = false;
 
+// Response to UI and toggle stepper-mode on and off.
 function doStepperToggle() {
-    if (controlStepToggle.checked) {
+    if (cntrlStepToggle.checked) {
         if (runner) {
             // pause if playing
             doPlayPause();
         }
-        playPause.disabled = true;
+        ctrlPlayPause.disabled = true;
         isStepping = true;
         canvas.classList.add('stepping');
     } else {
-        playPause.disabled = false;
+        ctrlPlayPause.disabled = false;
         isStepping = false;
         canvas.classList.remove('stepping');
     }
@@ -315,17 +322,17 @@ function initialize() {
     canvas.addEventListener('click', doCanvasClick);
     canvas.addEventListener('mousemove', doCanvasMousemove);
 
-    controlStepToggle.addEventListener('change', doStepperToggle);
+    cntrlStepToggle.addEventListener('change', doStepperToggle);
 
     document.addEventListener('keydown', evt => {
         if (evt.altKey || evt.ctrlKey || evt.metaKey) return;
 
-        if (evt.key == 'p' && playPause.disabled == false) {
+        if (evt.key == 'p' && ctrlPlayPause.disabled == false) {
             doPlayPause();
         } else if (evt.key == 'r') {
             doReloadConfig();
         } else if (evt.key == 's') {
-            controlStepToggle.checked = !controlStepToggle.checked;
+            cntrlStepToggle.checked = !cntrlStepToggle.checked;
             doStepperToggle();
         }
     });
