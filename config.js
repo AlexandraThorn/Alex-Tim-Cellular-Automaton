@@ -101,21 +101,26 @@ elements = {
                 return;
             }
 
+            function consume(cell) {
+                set(cell.pos, {type: 'air'});
+                swap(me.pos, cell.pos);
+            }
+
             // Check left and right for carrots first
             for (const r of shuffled(reflectY)) {
                 const side = look(me.pos, r(east));
                 if (side.data.type == 'carrot') {
-                    set(side.pos, {type: 'air'});
-                    swap(me.pos, side.pos);
-                    return;
+                    return consume(side);
                 }
             }
 
-            // Check below for carrots
+            // Check above and below for carrots
             if (down.data.type == 'carrot') {
-                set(down.pos, {type: 'air'});
-                swap(me.pos, down.pos);
-                return;
+                return consume(down);
+            }
+            const up = look(me.pos, north);
+            if (up.data.type == 'carrot') {
+                return consume(up);
             }
 
             // Still no carrots? Maybe walk around.
@@ -128,6 +133,16 @@ elements = {
             // Can hop up a little too.
             const upside = look(me.pos, lr(northeast));
             if (upside.data.type == 'air') {
+                swap(me.pos, upside.pos);
+                return;
+            }
+
+            // Trapped under sand? Can dig out, slowly.
+            if (up.data.type == 'sand' && Math.random() < 0.4) {
+                swap(me.pos, up.pos);
+                return;
+            }
+            if (upside.data.type == 'sand' && Math.random() < 0.2) {
                 swap(me.pos, upside.pos);
                 return;
             }
