@@ -440,7 +440,7 @@ function onReloadConfig() {
 function loadConfig(onLoad) {
     const s = document.createElement('script');
     s.id = "config-loader";
-    s.src = "config.js?cache-bust=" + Math.random();
+    s.src = "config.js?cache-bust=" + new Date().getTime();
     s.addEventListener('load', onLoad);
     document.body.append(s);
     document.body.removeChild(s);
