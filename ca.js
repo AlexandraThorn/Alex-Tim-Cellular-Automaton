@@ -350,10 +350,7 @@ function setIterationTiming(ms) {
 // Update the iteration timing based on the controls.
 function doChooseSpeed() {
     // Interpret scale as negated exponent.
-    console.log("selected", ctrlSpeed.value);
     const exponent = (Number(ctrlSpeed.max) + Number(ctrlSpeed.min)) - Number(ctrlSpeed.value);
-    console.log("modified", exponent);
-    console.log("raised", Math.ceil(Math.exp(exponent)));
     setIterationTiming(Math.ceil(Math.exp(exponent)));
 }
 
