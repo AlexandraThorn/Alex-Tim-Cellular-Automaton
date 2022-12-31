@@ -53,111 +53,49 @@ elements = {
         },
     },
 
-    'sand': {
-        textFgColor: '#cc0',
-        textBgColor: 'black',
+    'huegene': {
+        textFgColor: 'white',
+        textBgColor: 'purple',
+        initialize: function(data) {
+            data.h = Math.random();
+            data.s = Math.random();
+            data.v = Math.random();
+            data.mut = Math.random()/30;
+        },
         draw: function(data, px, py) {
-            drawSolid('#cc0', px, py);
+            drawSolid(hsv2rgb(data.h, data.s, data.v), px, py);
         },
         act: function(me) {
-            // Just fall straight down if possible.
-            const below = look(me.pos, south);
-            if (below.data.type == 'air') {
-                swap(me.pos, below.pos);
-                return;
+            // Get a "mutated" version of the property. (Not actually
+            // mutating the data structure.)
+            function mutatedProperty(data, prop) {
+                // Add or subtract, within a range of size data.mut
+                const factor = Math.random() * data.mut - data.mut/2;
+                // Clamp all values to [0, 1]
+                return Math.min(1, Math.max(0, data[prop] + factor));
             }
 
-            // Otherwise, see if it can slide diagonally.
-            var r = randomHorizontal();
-            const se = look(me.pos, r(southeast));
-            if (se.data.type == 'air') {
-                swap(me.pos, se.pos);
-                return;
-            }
-        },
-    },
+            // Fields that can be "mutated"
+            const mutables = ["h", "s", "v", "mut"];
 
-    'carrot': {
-        textFgColor: '#fa0',
-        textBgColor: 'black',
-        draw: function(data, px, py) {
-            drawSolid('#fa0', px, py);
-        },
-        act: function(me) {
-            // Just fall straight down if possible.
-            const below = look(me.pos, south);
-            if (below.data.type == 'air') {
-                swap(me.pos, below.pos);
-                return;
-            }
-
-            // Otherwise, see if it can slide diagonally.
-            var r = randomHorizontal();
-            const se = look(me.pos, r(southeast));
-            if (se.data.type == 'air') {
-                swap(me.pos, se.pos);
-                return;
-            }
-        },
-    },
-
-    'rabbit': {
-        textFgColor: 'black',
-        textBgColor: 'pink',
-        draw: function(data, px, py) {
-            drawSolid('pink', px, py);
-        },
-        act: function(me) {
-            // Rabbits fall down in air
-            const down = look(me.pos, south);
-            if (down.data.type == 'air') {
-                swap(me.pos, down.pos);
-                return;
-            }
-
-            function consume(cell) {
-                set(cell.pos, {type: 'air'});
-                swap(me.pos, cell.pos);
-            }
-
-            // Check left and right for carrots first
-            for (const r of randomHorizontalAll()) {
-                const side = look(me.pos, r(east));
-                if (side.data.type == 'carrot') {
-                    return consume(side);
+            // Make a shallow copy of data with some attributes "mutated".
+            function makeChild(data) {
+                const child = {};
+                for (const [k, v] of Object.entries(data)) {
+                    if (mutables.indexOf(k) > -1) {
+                        child[k] = mutatedProperty(data, k);
+                    } else {
+                        child[k] = v;
+                    }
                 }
+                return child;
             }
 
-            // Check above and below for carrots
-            if (down.data.type == 'carrot') {
-                return consume(down);
-            }
-            const up = look(me.pos, north);
-            if (up.data.type == 'carrot') {
-                return consume(up);
-            }
-
-            // Still no carrots? Maybe walk around.
-            const lr = randomHorizontal();
-            const side = look(me.pos, lr(east));
-            if (side.data.type == 'air') {
-                swap(me.pos, side.pos);
-                return;
-            }
-            // Can hop up a little too.
-            const upside = look(me.pos, lr(northeast));
-            if (upside.data.type == 'air') {
-                swap(me.pos, upside.pos);
-                return;
-            }
-
-            // Trapped under sand? Can dig out, slowly.
-            if (up.data.type == 'sand' && Math.random() < 0.4) {
-                swap(me.pos, up.pos);
-                return;
-            }
-            if (upside.data.type == 'sand' && Math.random() < 0.2) {
-                swap(me.pos, upside.pos);
+            // Expand into air, "mutating" slightly.
+            var r = randomRotateQuarter();
+            const edge = look(me.pos, r(south));
+            if (edge.data.type == 'air') {
+                set(edge.pos, makeChild(me.data));
                 return;
             }
         },
@@ -167,4 +105,4 @@ elements = {
 // This is the element to use when clearing the world (or initializing it).
 clearElement = 'air';
 // This is the element to have selected for drawing, by default.
-defaultSelection = 'sand';
+defaultSelection = 'huegene';
