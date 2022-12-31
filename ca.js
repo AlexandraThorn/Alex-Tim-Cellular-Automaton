@@ -48,11 +48,11 @@ const ctx = canvas.getContext('2d');
 // ==== World settings ==== //
 
 // Size of world, in cells
-const cols = 50;
-const rows = 50;
+const cols = 200;
+const rows = 200;
 
 // Size of cells, in pixels
-const cellSize = 8;
+const cellSize = 3;
 
 
 // ==== World and accessors ==== //

@@ -53,19 +53,44 @@ elements = {
         },
     },
 
+    // Makes thick walls even if you draw a gappy line (nice for making mazes)
+    'spread': {
+        textFgColor: 'white',
+        textBgColor: 'black',
+        initialize: function(data) {
+            data.remaining = 4;
+        },
+        draw: function(data, px, py) {
+            drawSolid('black', px, py);
+        },
+        act: function(me) {
+            for (const r of randomRotateQuarterAll()) {
+                if (me.data.remaining <= 0) return;
+
+                const edge = look(me.pos, r(south));
+                if (edge.data.type == 'air') {
+                    set(edge.pos, {type: 'spread', remaining: me.data.remaining - 1});
+                }
+            }
+        },
+    },
+
     'huegene': {
         textFgColor: 'white',
         textBgColor: 'purple',
         initialize: function(data) {
             data.h = Math.random();
-            data.s = Math.random();
-            data.v = Math.random();
+            data.s = Math.random() * 0.8 + 0.2;
+            data.v = Math.random() * 0.7 + 0.2;
             data.mut = Math.random()/30;
         },
         draw: function(data, px, py) {
             drawSolid(hsv2rgb(data.h, data.s, data.v), px, py);
         },
         act: function(me) {
+            // Uncomment and reload to erase huegene
+            //set(me.pos, make('air')); return;
+
             // Get a "mutated" version of the property. (Not actually
             // mutating the data structure.)
             function mutatedProperty(data, prop) {
@@ -88,15 +113,19 @@ elements = {
                         child[k] = v;
                     }
                 }
+                child.mut = Math.max(0.01, child.mut);
                 return child;
             }
 
             // Expand into air, "mutating" slightly.
             var r = randomRotateQuarter();
             const edge = look(me.pos, r(south));
-            if (edge.data.type == 'air') {
-                set(edge.pos, makeChild(me.data));
-                return;
+            // Can't grow if too mutated
+            if (me.data.mut < 0.15) {
+                if (edge.data.type == 'air') {
+                    set(edge.pos, makeChild(me.data));
+                    return;
+                }
             }
         },
     },
