@@ -298,11 +298,11 @@ function togglePlayPause() {
         // Pause
         clearInterval(runner);
         runner = null;
-        ctrlPlayPause.textContent = "Play [p]";
+        ctrlPlayPause.textContent = "▶️ Play [p]";
     } else {
         // Play
         runner = setInterval(updateWorld, tickMillis);
-        ctrlPlayPause.textContent = "Pause [p]";
+        ctrlPlayPause.textContent = "⏸️ Pause [p]";
     }
 }
 
