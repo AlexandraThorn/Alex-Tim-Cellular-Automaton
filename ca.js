@@ -450,13 +450,8 @@ function initializeStage1() {
     });
 }
 
-
-// Set up UI, add listeners, create world, start event loop. Config is loaded
-// by this point.
-function initializeStage2() {
-
-    // ==== Create world ==== //
-
+// Recreate the world, wiping it out with the designate clear element.
+function recreateWorld() {
     canvas.width = cols * cellSize;
     canvas.height = rows * cellSize;
 
@@ -466,6 +461,16 @@ function initializeStage2() {
             set([x, y], make(clearElement));
         }
     }
+}
+
+
+// Set up UI, add listeners, create world, start event loop. Config is loaded
+// by this point.
+function initializeStage2() {
+
+    // ==== Create world ==== //
+
+    recreateWorld();
 
     // ==== Attach listeners ==== //
 
@@ -512,6 +517,8 @@ function initializeStage2() {
             togglePlayPause();
         } else if (evt.key == 'r') {
             reloadConfig();
+        } else if (evt.key == 'c') {
+            recreateWorld();
         } else if (evt.key == 's') {
             ctrlStepToggle.checked = !ctrlStepToggle.checked;
             toggleStepper();
@@ -524,6 +531,8 @@ function initializeStage2() {
     document.getElementById('reload-config')
         .addEventListener('click', evt => reloadConfig());
 
+    document.querySelector('button#clear')
+        .addEventListener('click', evt => recreateWorld());
 
     // ==== Start ==== //
 
