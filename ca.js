@@ -531,8 +531,16 @@ function initializeStage2() {
     document.getElementById('reload-config')
         .addEventListener('click', evt => reloadConfig());
 
-    document.querySelector('button#clear')
+    document.querySelector('button#clear-all')
         .addEventListener('click', evt => recreateWorld());
+
+    document.querySelector('button#clear-current').addEventListener('click', evt => {
+        for (const pos of allPositions()) {
+            if (get(pos).data.type == selectedElementType)
+                set(pos, make(clearElement));
+        }
+        redrawWorld();
+    });
 
     // ==== Start ==== //
 
