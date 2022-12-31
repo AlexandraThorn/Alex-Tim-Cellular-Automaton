@@ -72,6 +72,7 @@ elements = {
                     set(edge.pos, {type: 'spread', remaining: me.data.remaining - 1});
                 }
             }
+            me.data.remaining = 0;
         },
     },
 
