@@ -96,8 +96,15 @@ elements = {
             function mutatedProperty(data, prop) {
                 // Add or subtract, within a range of size data.mut
                 const factor = Math.random() * data.mut - data.mut/2;
-                // Clamp all values to [0, 1]
-                return Math.min(1, Math.max(0, data[prop] + factor));
+                const modified = data[prop] + factor;
+
+                if (prop == 'h') {
+                    // Allow hue to wrap around
+                    return (modified + 2) % 1;
+                } else {
+                    // Clamp other values to [0, 1]
+                    return Math.min(1, Math.max(0, modified));
+                }
             }
 
             // Fields that can be "mutated"
