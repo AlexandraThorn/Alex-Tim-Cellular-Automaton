@@ -12,7 +12,7 @@
           cursor: pointer;
       }
 
-      #controls {
+      #interaction {
           padding: 0.3em;
       }
 
@@ -34,18 +34,22 @@
   </head>
   <body>
     <canvas id="world"></canvas>
-    <div id="controls">
+    <div id="interaction">
       <button onclick="doPlayPause()" id="play-pause">Play [p]</button>
       <label><input type="checkbox" id="step-toggle">Step mode [s]</label>
-      <button onclick="doReloadConfig()"
-              title="If you edit config.js, this button will live-reload it while the simulation continues to run.">
-        Reload config [r]
-      </button>
+      <br>
+      <label><input type="range" id="speedsel" min="1.6" max="8" value="5" step="any" />Speed</label>
     </div>
     <div id="elements">
-      <!-- Element selectors get added here -->
+      <!-- Element selectors get added here after they are loaded -->
     </div>
-    <div id="status">
+    <div>
+      <button
+        onclick="doReloadConfig()"
+        title="If you edit config.js, this button will live-reload it while the simulation continues to run.">
+        Reload config [r]
+      </button>
+      <br>
       <span id="inspector"></span>
     </div>
     <script src="ca.js"></script>

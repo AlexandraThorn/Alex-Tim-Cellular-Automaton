@@ -34,8 +34,10 @@ function pickRandom(array) {
 // Play/pause button
 const ctrlPlayPause = document.getElementById("play-pause");
 // Stepper-mode checkbox control
-const cntrlStepToggle = document.getElementById('step-toggle');
+const ctrlStepToggle = document.getElementById('step-toggle');
 const inspectorNode = document.getElementById('inspector');
+// Speed selection control
+const ctrlSpeed = document.getElementById('speedsel');
 
 // The canvas on which we project the world.
 const canvas = document.getElementById("world");
@@ -318,7 +320,9 @@ function updateWorld() {
 }
 
 // Handle on the world-updating loop. (setInterval/clearInterval).
-var runner = null;
+let runner = null;
+// Milliseconds between iterations.
+let tickMillis = undefined;
 
 // Button handler: Toggle between running/paused.
 function doPlayPause() {
@@ -329,9 +333,28 @@ function doPlayPause() {
         ctrlPlayPause.textContent = "Play [p]";
     } else {
         // Play
-        runner = setInterval(updateWorld, 100);
+        runner = setInterval(updateWorld, tickMillis);
         ctrlPlayPause.textContent = "Pause [p]";
     }
+}
+
+// Set the time between iterations to the provided number of milliseconds.
+function setIterationTiming(ms) {
+    tickMillis = ms;
+    if (runner) {
+        clearInterval(runner);
+        runner = setInterval(updateWorld, tickMillis);
+    }
+}
+
+// Update the iteration timing based on the controls.
+function doChooseSpeed() {
+    // Interpret scale as negated exponent.
+    console.log("selected", ctrlSpeed.value);
+    const exponent = (Number(ctrlSpeed.max) + Number(ctrlSpeed.min)) - Number(ctrlSpeed.value);
+    console.log("modified", exponent);
+    console.log("raised", Math.ceil(Math.exp(exponent)));
+    setIterationTiming(Math.ceil(Math.exp(exponent)));
 }
 
 // Whether stepper-mode is on.
@@ -339,7 +362,7 @@ let isStepping = false;
 
 // Response to UI and toggle stepper-mode on and off.
 function doStepperToggle() {
-    if (cntrlStepToggle.checked) {
+    if (ctrlStepToggle.checked) {
         if (runner) {
             // pause if playing
             doPlayPause();
@@ -479,7 +502,7 @@ function initializeStage2() {
     canvas.addEventListener('mousemove', doCanvasMousemove);
     canvas.addEventListener('mouseout', evt => inspectorNode.textContent = "");
 
-    cntrlStepToggle.addEventListener('change', doStepperToggle);
+    ctrlStepToggle.addEventListener('change', doStepperToggle);
 
     document.addEventListener('keydown', evt => {
         if (evt.altKey || evt.ctrlKey || evt.metaKey) return;
@@ -489,10 +512,13 @@ function initializeStage2() {
         } else if (evt.key == 'r') {
             doReloadConfig();
         } else if (evt.key == 's') {
-            cntrlStepToggle.checked = !cntrlStepToggle.checked;
+            ctrlStepToggle.checked = !ctrlStepToggle.checked;
             doStepperToggle();
         }
     });
+
+    ctrlSpeed.addEventListener('change', doChooseSpeed);
+    doChooseSpeed();
 
     doPlayPause();
 }
