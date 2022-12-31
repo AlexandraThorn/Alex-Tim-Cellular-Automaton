@@ -35,7 +35,7 @@
   <body>
     <canvas id="world"></canvas>
     <div id="interaction">
-      <button onclick="doPlayPause()" id="play-pause">Play [p]</button>
+      <button id="play-pause">Play [p]</button>
       <label><input type="checkbox" id="step-toggle">Step mode [s]</label>
       <br>
       <label><input type="range" id="speedsel" min="1.6" max="8" value="5" step="any" />Speed</label>
@@ -45,7 +45,7 @@
     </div>
     <div>
       <button
-        onclick="doReloadConfig()"
+        id="reload-config"
         title="If you edit config.js, this button will live-reload it while the simulation continues to run.">
         Reload config [r]
       </button>

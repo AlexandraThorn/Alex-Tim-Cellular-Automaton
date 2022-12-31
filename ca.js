@@ -60,13 +60,6 @@ const cellSize = 8;
 // Column/x, then row/y. Initialized later.
 var world = [];
 
-// Coordinate transform from DOM event to cell position.
-function canvasToPos(evt) {
-    var posX = Math.floor(evt.offsetX / cellSize);
-    var posY = Math.floor(evt.offsetY / cellSize);
-    return [posX, posY];
-}
-
 
 // ==== Reloadable settings ==== //
 
@@ -77,31 +70,6 @@ function canvasToPos(evt) {
 let elements = undefined;
 let clearElement = undefined;
 let defaultSelection = undefined;
-
-
-// ==== Interactively drawing on the canvas ==== //
-
-// Draw on the canvas, or step, due to a click.
-function doCanvasClick(evt) {
-    if (evt.target != canvas) return;
-    if (isStepping) {
-        stepCell(canvasToPos(evt));
-    } else {
-        set(canvasToPos(evt), make(selectedElementType));
-    }
-}
-
-// Draw on the canvas due to a mouse drag.
-function doCanvasMousemove(evt) {
-    if (evt.target != canvas) return;
-
-    const pos = canvasToPos(evt)
-    inspectorNode.textContent = `${pos[0]}, ${pos[1]}: ` + JSON.stringify(get(pos).data);
-
-    if (isStepping) return;
-    if ((evt.buttons & 1) == 0) return; // only left/main button
-    set(pos, make(selectedElementType));
-}
 
 
 // ==== Direction logic ==== //
@@ -324,8 +292,8 @@ let runner = null;
 // Milliseconds between iterations.
 let tickMillis = undefined;
 
-// Button handler: Toggle between running/paused.
-function doPlayPause() {
+// Toggle between running/paused.
+function togglePlayPause() {
     if (runner) {
         // Pause
         clearInterval(runner);
@@ -348,7 +316,7 @@ function setIterationTiming(ms) {
 }
 
 // Update the iteration timing based on the controls.
-function doChooseSpeed() {
+function updateSpeed() {
     // Interpret scale as negated exponent.
     const exponent = (Number(ctrlSpeed.max) + Number(ctrlSpeed.min)) - Number(ctrlSpeed.value);
     setIterationTiming(Math.ceil(Math.exp(exponent)));
@@ -358,11 +326,11 @@ function doChooseSpeed() {
 let isStepping = false;
 
 // Response to UI and toggle stepper-mode on and off.
-function doStepperToggle() {
+function toggleStepper() {
     if (ctrlStepToggle.checked) {
         if (runner) {
             // pause if playing
-            doPlayPause();
+            togglePlayPause();
         }
         ctrlPlayPause.disabled = true;
         isStepping = true;
@@ -456,7 +424,7 @@ function onReloadConfig() {
     redrawWorld();
 }
 
-// Run config.js and all the callback when that's done
+// Run config.js and call the callback when that's done
 function loadConfig(onLoad) {
     const s = document.createElement('script');
     s.id = "config-loader";
@@ -466,8 +434,8 @@ function loadConfig(onLoad) {
     document.body.removeChild(s);
 }
 
-// Reload config due to UI event
-function doReloadConfig() {
+// Reload config
+function reloadConfig() {
     loadConfig(onReloadConfig);
 }
 
@@ -482,9 +450,13 @@ function initializeStage1() {
     });
 }
 
+
 // Set up UI, add listeners, create world, start event loop. Config is loaded
 // by this point.
 function initializeStage2() {
+
+    // ==== Create world ==== //
+
     canvas.width = cols * cellSize;
     canvas.height = rows * cellSize;
 
@@ -495,29 +467,68 @@ function initializeStage2() {
         }
     }
 
-    canvas.addEventListener('click', doCanvasClick);
-    canvas.addEventListener('mousemove', doCanvasMousemove);
+    // ==== Attach listeners ==== //
+
+    // Coordinate transform from DOM event to cell position.
+    function canvasToPos(evt) {
+        var posX = Math.floor(evt.offsetX / cellSize);
+        var posY = Math.floor(evt.offsetY / cellSize);
+        return [posX, posY];
+    }
+
+    // Clicking on the canvas allows drawing or stepping
+    canvas.addEventListener('click', evt => {
+        if (evt.target != canvas) return;
+
+        const pos = canvasToPos(evt);
+        if (isStepping) {
+            stepCell(pos);
+        } else {
+            set(pos, make(selectedElementType));
+        }
+    });
+
+    // Mouseover activates inspector; dragging also allows drawing
+    canvas.addEventListener('mousemove', evt => {
+        if (evt.target != canvas) return;
+
+        const pos = canvasToPos(evt);
+        inspectorNode.textContent = `${pos[0]}, ${pos[1]}: ` + JSON.stringify(get(pos).data);
+
+        if (isStepping) return;
+        if ((evt.buttons & 1) == 0) return; // only left/main button
+        set(pos, make(selectedElementType));
+    });
+
+    // Clear inspector when mouse away
     canvas.addEventListener('mouseout', evt => inspectorNode.textContent = "");
 
-    ctrlStepToggle.addEventListener('change', doStepperToggle);
+    ctrlStepToggle.addEventListener('change', evt => toggleStepper());
 
     document.addEventListener('keydown', evt => {
         if (evt.altKey || evt.ctrlKey || evt.metaKey) return;
 
         if (evt.key == 'p' && ctrlPlayPause.disabled == false) {
-            doPlayPause();
+            togglePlayPause();
         } else if (evt.key == 'r') {
-            doReloadConfig();
+            reloadConfig();
         } else if (evt.key == 's') {
             ctrlStepToggle.checked = !ctrlStepToggle.checked;
-            doStepperToggle();
+            toggleStepper();
         }
     });
 
-    ctrlSpeed.addEventListener('change', doChooseSpeed);
-    doChooseSpeed();
+    ctrlSpeed.addEventListener('change', evt => updateSpeed());
 
-    doPlayPause();
+    ctrlPlayPause.addEventListener('click', evt => togglePlayPause());
+    document.getElementById('reload-config')
+        .addEventListener('click', evt => reloadConfig());
+
+
+    // ==== Start ==== //
+
+    updateSpeed();
+    togglePlayPause();
 }
 
 // This forces us to wait for all images to load, not just all HTML.
