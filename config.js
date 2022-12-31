@@ -115,7 +115,7 @@ elements = {
                                     set(cotouch.pos, make('gloop'));
                                     me.data.carrying--;
                                     redrawCell(me.data, me.pos);
-                                    break;
+                                    return;
                                 }
                             }
                         } else if (se.data.type == 'wall') {
@@ -125,7 +125,7 @@ elements = {
                                     set(cotouch.pos, make('gloop'));
                                     me.data.carrying--;
                                     redrawCell(me.data, me.pos);
-                                    break;
+                                    return;
                                 }
                             }
                         }
