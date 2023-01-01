@@ -76,6 +76,8 @@ elements = {
         },
     },
 
+    // The basic idea for Huegene comes from Dave Ackley, although this one
+    // works a little differently.
     'huegene': {
         textFgColor: 'white',
         textBgColor: 'purple',
