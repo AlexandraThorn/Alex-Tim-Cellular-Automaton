@@ -92,6 +92,7 @@ elements = {
             function absorbWater(cell) {
                 set(cell.pos, {type: 'air'});
                 me.data.moisture += 30;
+                redrawCell(me.data,me.pos)
             }
             
             //soaking up water nearby
@@ -115,6 +116,7 @@ elements = {
             function drainWaterTo(cell) {
                 set(cell.pos, {type: 'water'});
                 me.data.moisture -= 30;
+                redrawCell(me.data,me.pos)
             }
 
             //drainage of water above holding capacity
@@ -128,13 +130,17 @@ elements = {
                     let spaceBelow = below.data.maxCap - below.data.moisture;
 		    let drainage=Math.min(excessWater,spaceBelow);
                     me.data.moisture -= drainage;
+                    redrawCell(me.data,me.pos)
                     below.data.moisture += drainage;
+                    redrawCell(below.data,below.pos)
                 } else if ((se.data.type == 'sand') &&
 		    (se.data.moisture < me.data.moisture)) {
                     let spaceBelow = se.data.maxCap - se.data.moisture;
 		    let drainage = Math.min(excessWater,spaceBelow);
                     me.data.moisture -= drainage;
+                    redrawCell(me.data,me.pos)
                     se.data.moisture += drainage;
+                    redrawCell(se.data,se.pos)
                 } else if (se.data.type == 'air') {
                     return drainWaterTo(se);
                 } else if ((side.data.type == 'air') && ((me.data.moisture - me.data.waterHoldingCap) >=30)) {
@@ -145,7 +151,9 @@ elements = {
                     let diffWater = me.data.moisture - side.data.moisture
                     let sidewaysFlow = Math.min(excessWater, (diffWater/2))
                     me.data.moisture -= sidewaysFlow
+                    redrawCell(me.data,me.pos)
                     side.data.moisture += sidewaysFlow
+                    redrawCell(side.data,side.pos)
                 }
 
             }
