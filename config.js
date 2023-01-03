@@ -53,6 +53,10 @@ elements = {
         },
     },
 
+	//resources on soil hydraulics:
+	//  - https://en.wikipedia.org/wiki/Hydraulic_conductivity
+	//  - https://wwwrcamnl.wr.usgs.gov/uzf/unsatflow/unsatflow.html
+	//  - https://en.wikipedia.org/wiki/Water_retention_curve
     'sand': {
         textFgColor: '#cc0',
         textBgColor: 'black',
