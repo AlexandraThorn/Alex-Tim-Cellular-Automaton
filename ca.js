@@ -508,6 +508,7 @@ function initializeStage2() {
     // Clear inspector when mouse away
     canvas.addEventListener('mouseout', evt => inspectorNode.textContent = "");
 
+    ctrlStepToggle.checked = false;
     ctrlStepToggle.addEventListener('change', evt => toggleStepper());
 
     document.addEventListener('keydown', evt => {
