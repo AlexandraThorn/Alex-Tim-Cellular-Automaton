@@ -511,6 +511,8 @@ function initializeStage2() {
     ctrlStepToggle.checked = false;
     ctrlStepToggle.addEventListener('change', evt => toggleStepper());
 
+    document.getElementById('step-all-once').addEventListener('click', evt => updateWorld());
+
     document.addEventListener('keydown', evt => {
         if (evt.altKey || evt.ctrlKey || evt.metaKey) return;
 
